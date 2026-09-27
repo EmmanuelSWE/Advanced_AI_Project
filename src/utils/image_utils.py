@@ -11,10 +11,10 @@ def createImagePaths(arrNames):
         print(f'made paths for task: {name}')
     print('All Image paths made succesfully!')
 
-def saveImageToPath(path,image,step):
+def saveImageToPath(path,image,step,index):
     pathToSave = genPath+'/' + path 
     if(Path(pathToSave).exists()):
-        iio.imwrite(f"{pathToSave}/{path}_step{step}.png",image)
+        iio.imwrite(f"{pathToSave}/{path}_step{step}_id{index}.png",image)
         #print(f"saved image {path} of  {step}")
     else: 
         print(f'{pathToSave} path does not exist for step {step}')

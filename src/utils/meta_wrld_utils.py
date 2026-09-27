@@ -58,28 +58,29 @@ def getPolicy(name): # small function to get the policy
 def execEpisode(env, policy , rgb_env, task, startIndex):
             obs,info = env.reset()
             currentIndex = startIndex + 1
-            currentRecord = np.empty((1,6))
-            imgRecord = np.array([])
+            currentRecord = []
+            imgRecord = []
             #env.render()
             for step in range(500):
                 image = rgb_env.render()
                 action = policy.get_action(obs)
 
-                currentRecord = np.append(currentRecord,[currentIndex,startIndex,task,step,f"{pathgen}/{task}_step{step}.png",action])
-                imgRecord = np.append(imgRecord,image)
+                currentRecord = currentRecord.append([currentIndex,startIndex,task,step,f"{pathgen}/{task}_step{step}.png",action])
+                imgRecord.append(image)
                 print(f"action is {action}")
                 obs,reward,terminated,truncated,info = env.step(action)
 
                 
 
-                currentIndex += currentIndex
+                currentIndex += 1
 
                 if info["success"] == 1: 
-
+                    image = rgb_env.render()
+                    imgRecord = np.append(image)
                     print(f"render of task {task} done SUCCESSFULLY STROING NOW")
                     csvUtils.writeToDataset(contents=currentRecord)
                     for i, c in enumerate(currentRecord):
-                         imageUtil.saveImageToPath(task,imgRecord[i],c[3]) # index 3 is where the step is stored
+                         imageUtil.saveImageToPath(task,imgRecord[i],c[3],currentIndex) # index 3 is where the step is stored
                          
                     break
                 if terminated or truncated:
