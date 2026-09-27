@@ -30,27 +30,28 @@ def runAndStoreDemonstrations():
             #env.render()
             for step in range(500):
                 action = policy.get_action(obs)
+                print(f"action is {action}")
                 obs,reward,terminated,truncated,info = env.step(action)
                 image = rgb_env.render()
                 imageUtil.saveImageToPath(task,image,step)
 
+                
+
                 if info["success"] == 1: 
                     print(f"render of task {task} done")
+                    break
                 if terminated or truncated:
                     break 
+
+            print(f'task {task} COMPLETE GOING TO NEXT TASK')
         finally:
             env.close()
 
-
-
-
-
-
-
 def getPolicy(name): # small function to get the policy
-    if name == pathgen[0]:
+    print(f"NAME OF POLICY ILL GET FOR {name}")
+    if name == tasks[0]:
         return SawyerReachV3Policy()
-    elif name == pathgen[1]:
+    elif name == tasks[1]:
         return SawyerButtonPressV3Policy()
-    else:
+    elif  name == tasks[2]:
         return SawyerDoorOpenV3Policy()

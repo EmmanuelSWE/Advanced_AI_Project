@@ -15,7 +15,9 @@ def saveImageToPath(path,image,step):
     pathToSave = genPath+'/' + path 
     if(Path(pathToSave).exists()):
         iio.imwrite(f"{pathToSave}/{path}_step{step}.png",image)
-    print(f'{pathToSave} path does not exist')
+        #print(f"saved image {path} of  {step}")
+    else: 
+        print(f'{pathToSave} path does not exist for step {step}')
 
 
 def loadImageFromPath():
