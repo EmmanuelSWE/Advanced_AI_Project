@@ -7,45 +7,41 @@ from metaworld.policies.sawyer_door_open_v3_policy import SawyerDoorOpenV3Policy
 from gymnasium.wrappers import HumanRendering
 from utils.const_list_utils import GEN_PATH_CONST as pathgen 
 from utils.const_list_utils import TASKS_CONST as tasks
+import utils.csv_utils as csvUtils 
 import utils.image_utils as imageUtil
+import random
+import numpy as np
 
 # function to create the environment
-def createEnv(name):
-    return gym.make("Meta-World/MT1", env_name=name, render_mode= 'rgb_array', camera_name = 'topview')
+def createEnv(name, seed):
+    return gym.make("Meta-World/MT1", env_name=name, render_mode= 'rgb_array', camera_name = 'topview', num_tasks = 45, seed = seed)
 
 
+#HEADING_CONST= ['imgID','task','step','path','action','seed']
 #function to store images infolder
 def runAndStoreDemonstrations():
+    #create the storage
     imageUtil.createImagePaths(tasks)
+    csvUtils.createDataset() 
+
+    imgStartId = 0
+    seed = [11,121,111,45,999]
 
     for _,task in enumerate(tasks):
+
         print(f"PATH NAME IS {task}")
         policy = getPolicy(task)
-        env = createEnv(task)
+        env = createEnv(task, seed[random.randint(0, len(seed) - 1)] )
         rgb_env = env 
         env = HumanRendering(env)
 
         try: 
-            obs,info = env.reset()
-            #env.render()
-            for step in range(500):
-                action = policy.get_action(obs)
-                print(f"action is {action}")
-                obs,reward,terminated,truncated,info = env.step(action)
-                image = rgb_env.render()
-                imageUtil.saveImageToPath(task,image,step)
-
-                
-
-                if info["success"] == 1: 
-                    print(f"render of task {task} done")
-                    break
-                if terminated or truncated:
-                    break 
-
-            print(f'task {task} COMPLETE GOING TO NEXT TASK')
+           for i in range(100):
+                execEpisode(env=env,policy=policy,rgb_env=rgb_env,task=task,startIndex=imgStartId)
+           imgStartId += 100
         finally:
             env.close()
+
 
 def getPolicy(name): # small function to get the policy
     print(f"NAME OF POLICY ILL GET FOR {name}")
@@ -55,3 +51,40 @@ def getPolicy(name): # small function to get the policy
         return SawyerButtonPressV3Policy()
     elif  name == tasks[2]:
         return SawyerDoorOpenV3Policy()
+
+
+#function to execute task episode
+#HEADING_CONST= ['imgID','demonstarionID','task','step','path','action']
+def execEpisode(env, policy , rgb_env, task, startIndex):
+            obs,info = env.reset()
+            currentIndex = startIndex + 1
+            currentRecord = np.empty((1,6))
+            imgRecord = np.array([])
+            #env.render()
+            for step in range(500):
+                image = rgb_env.render()
+                action = policy.get_action(obs)
+
+                currentRecord = np.append(currentRecord,[currentIndex,startIndex,task,step,f"{pathgen}/{task}_step{step}.png",action])
+                imgRecord = np.append(imgRecord,image)
+                print(f"action is {action}")
+                obs,reward,terminated,truncated,info = env.step(action)
+
+                
+
+                currentIndex += currentIndex
+
+                if info["success"] == 1: 
+
+                    print(f"render of task {task} done SUCCESSFULLY STROING NOW")
+                    csvUtils.writeToDataset(contents=currentRecord)
+                    for i, c in enumerate(currentRecord):
+                         imageUtil.saveImageToPath(task,imgRecord[i],c[3]) # index 3 is where the step is stored
+                         
+                    break
+                if terminated or truncated:
+                    break 
+
+            print(f'task {task} COMPLETE GOING TO NEXT EPISODE')
+            return currentIndex
+
