@@ -3,10 +3,13 @@ import imageio.v3 as iio
 import time
 from pathlib import Path 
 from utils.const_list_utils import GEN_PATH_CONST as genPath
+from utils.const_list_utils import remove
 
 
 def createImagePaths(arrNames):
+    remove(genPath) # first remove
     for _, name in enumerate(arrNames):
+      
         Path(f'{genPath}/{name}').mkdir(parents = True,exist_ok=True);
         print(f'made paths for task: {name}')
     print('All Image paths made succesfully!')

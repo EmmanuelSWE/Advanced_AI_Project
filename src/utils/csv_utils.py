@@ -2,6 +2,7 @@ import csv
 from utils.const_list_utils import DATASET_PATH as dsPath
 from utils.const_list_utils import DATASET_NAME_CONST as filePath 
 from utils.const_list_utils import HEADING_CONST as heading
+from utils.const_list_utils import remove
 from pathlib import Path 
 
 def readFile(name):
@@ -20,6 +21,7 @@ def writeToFile(name, content,mode = 'old'):
 
 
 def createDataset():
+    remove(dsPath)
     Path(dsPath).mkdir(exist_ok=True, parents= True) # create the path 
         # write the heading
     print('emptying file if any content')
