@@ -25,13 +25,13 @@ def createDataset():
     print('emptying file if any content')
         
     print('heading written')
-    writeToFile(filePath, heading,'new')
+    writeToFile(f'{dsPath}/{filePath}', heading,'new')
 
 
 def writeToDataset(contents): # contents has to be a 2d array
     print(f'appeding to file {dsPath}/{filePath}')
 
     for i,line in enumerate(contents):
-        writeToFile('filePath',line)
+        writeToFile(f'{dsPath}/{filePath}',line)
     print('done writing to the dataset')
     

@@ -12,6 +12,9 @@ import utils.image_utils as imageUtil
 import random
 import numpy as np
 
+counterDictionary = {'reach': 0, 'press' : 0, 'open': 0}
+
+
 # function to create the environment
 def createEnv(name, seed):
     return gym.make("Meta-World/MT1", env_name=name, render_mode= 'rgb_array', camera_name = 'topview', num_tasks = 45, seed = seed)
@@ -36,7 +39,7 @@ def runAndStoreDemonstrations():
         env = HumanRendering(env)
 
         try: 
-           for i in range(100):
+           while counterDictionary[tasks.index(task)] < 100:
                 execEpisode(env=env,policy=policy,rgb_env=rgb_env,task=task,startIndex=imgStartId)
            imgStartId += 100
         finally:
@@ -56,6 +59,8 @@ def getPolicy(name): # small function to get the policy
 #function to execute task episode
 #HEADING_CONST= ['imgID','demonstarionID','task','step','path','action']
 def execEpisode(env, policy , rgb_env, task, startIndex):
+
+            print(f'NUMBER OF SUCCESFUL DEMONSTRATIONS FOR TASK {task} IS NOW {counterDictionary[tasks.index(task)]}')
             obs,info = env.reset()
             currentIndex = startIndex + 1
             currentRecord = []
@@ -65,7 +70,7 @@ def execEpisode(env, policy , rgb_env, task, startIndex):
                 image = rgb_env.render()
                 action = policy.get_action(obs)
 
-                currentRecord = currentRecord.append([currentIndex,startIndex,task,step,f"{pathgen}/{task}_step{step}.png",action])
+                currentRecord.append([currentIndex,startIndex,task,step,f"{pathgen}/{task}_step{step}.png",action])
                 imgRecord.append(image)
                 print(f"action is {action}")
                 obs,reward,terminated,truncated,info = env.step(action)
@@ -75,8 +80,9 @@ def execEpisode(env, policy , rgb_env, task, startIndex):
                 currentIndex += 1
 
                 if info["success"] == 1: 
+                    counterDictionary[tasks.index(task)]  += 1 # counting a succesful demonstration
                     image = rgb_env.render()
-                    imgRecord = np.append(image)
+                    imgRecord.append(image)
                     print(f"render of task {task} done SUCCESSFULLY STROING NOW")
                     csvUtils.writeToDataset(contents=currentRecord)
                     for i, c in enumerate(currentRecord):
