@@ -42,8 +42,9 @@ def runAndStoreDemonstrations():
 
         try: 
            while counterDictionary[task] < 100:
-                execEpisode(env=env,policy=policy,rgb_env=rgb_env,task=task,startIndex=imgStartId)
-           imgStartId += 100
+                imgStartId = execEpisode(env=env,policy=policy,rgb_env=rgb_env,task=task,startIndex=imgStartId)
+                
+           
         finally:
             env.close()
 
@@ -64,7 +65,8 @@ def execEpisode(env, policy , rgb_env, task, startIndex):
 
             print(f'NUMBER OF SUCCESFUL DEMONSTRATIONS FOR TASK {task} IS NOW {counterDictionary[task] }')
             obs,info = env.reset()
-            currentIndex = startIndex + 1
+            demo_id = counterDictionary[task] + 1
+            currentIndex = startIndex 
             currentRecord = []
             imgRecord = []
             #env.render()
@@ -72,7 +74,7 @@ def execEpisode(env, policy , rgb_env, task, startIndex):
                 image = rgb_env.render()
                 action = policy.get_action(obs)
 
-                currentRecord.append([currentIndex,startIndex,task,step,f"{pathgen}/{task}_step{step}.png",action])
+                currentRecord.append([currentIndex,demo_id,task,step,f"{pathgen}/{task}/{task}_step{step}_id{demo_id}.png",action])
                 imgRecord.append(image)
                 print(f"action is {action}")
                 obs,reward,terminated,truncated,info = env.step(action)
@@ -88,8 +90,8 @@ def execEpisode(env, policy , rgb_env, task, startIndex):
                     print(f"render of task {task} done SUCCESSFULLY STROING NOW")
                     csvUtils.writeToDataset(contents=currentRecord)
                     for i, c in enumerate(currentRecord):
-                         imageUtil.saveImageToPath(task,imgRecord[i],c[3], c[3] + random.randint(1,100)) # index 3 is where the step is stored
-                    imageUtil.saveImageToPath(task,image,step, step + time.time()+ random.randint(1,100)) # save last image
+                         imageUtil.saveImageToPath(task,imgRecord[i],c[3], demo_id) # index 3 is where the step is stored
+                    imageUtil.saveImageToPath(task,image,step + 1, demo_id) # save last image
                          
                     break
                 if terminated or truncated:

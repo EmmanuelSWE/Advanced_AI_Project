@@ -1,4 +1,4 @@
-
+from PIL import Image
 import imageio.v3 as iio 
 import time
 from pathlib import Path 
@@ -23,8 +23,13 @@ def saveImageToPath(path,image,step,index):
         print(f'{pathToSave} path does not exist for step {step}')
 
 
-def loadImageFromPath():
-    pass
+def loadImageFromPath(path):
+    return Image.open(path, 'r', None)
+
+
+def getSize(image): 
+    return image.size
+
 
 
     
