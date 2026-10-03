@@ -5,6 +5,7 @@ import utils.dataset_utils as dsUtils
 from models.behaviorcloning import CNN
 import PIL.Image as Image
 import utils.plotter_utils as plotter
+import models.wgangp as WGAN
 
 
 
@@ -52,3 +53,13 @@ policy.plotTestData()
 
 #policy.identifyActions(img)
 
+
+## okay now the gan 
+gen = WGAN.Generator()
+disc = WGAN.Discrimintator()
+
+# load the dataset and train 
+
+genTrainSet = WGAN.loadDataSet(genTrainSet,4)
+
+WGAN.train_wagangp(gen,disc,genTrainSet,5)
