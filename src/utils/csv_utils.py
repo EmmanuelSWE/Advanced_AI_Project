@@ -4,12 +4,29 @@ from utils.const_list_utils import DATASET_NAME_CONST as filePath
 from utils.const_list_utils import HEADING_CONST as heading
 from utils.const_list_utils import remove
 from pathlib import Path 
+import itertools
 
-def readFile(name):
-    with open(name, newline='') as csvfile:
-        reader = csv.reader(csvfile,delimiter=' ', quotechar='|')
+
+headingCount =1 
+
+
+def readFile(end, demonID):
+    
+    content= []
+    with open( f"{dsPath}/{filePath}", newline='') as csvfile:
+        reader = csv.reader(csvfile,delimiter=' ', quotechar='"')
+        next(reader)
+        print(f"on demon {demonID}")
+        counter = 0
         for row in reader:
-            print(row)
+            tokens = row[4].split("_")
+            demoimg = tokens[-1].split(".")
+            demoNum = int(demoimg[0].strip()[2:])
+            if(demonID <= demoNum and demoNum <= end):
+                content.append(row)
+                #print(row)
+       # print(content)
+        return content
 
 def writeToFile(name, content,mode = 'old'): 
 
