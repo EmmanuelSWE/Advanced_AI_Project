@@ -22,7 +22,7 @@ class MenuItem:
 # POLOCY MENU ITTEMS
 class policyTrain(MenuItem):
     def __init__(self,save):
-        super().__init__('test Policy', 'Menu item is used to test the policy',save)
+        super().__init__('Train Policy', 'Menu item is used to test the policy',save)
 
     def exec(self,models,dataset):
         #get the policyDataset 
@@ -30,8 +30,10 @@ class policyTrain(MenuItem):
         policy = models["policy"]
         behaveTrainSet = dataset["policy"][0]
         behaveValSet = dataset["policy"][1]
-        behaveTestSet = dataset["policy"][2]
+        
 
+        print(len(behaveTrainSet.getItem(0)))
+        print(type(behaveTrainSet.getItem(0)[0]))
         policy.behavior_cloning(behaveTrainSet,behaveValSet)
         print("training complete")
         
@@ -42,7 +44,7 @@ class policyTrain(MenuItem):
 
 class policyTest(MenuItem):
     def __init__(self,save):
-        super().__init__('train Policy', 'Menu item is used to train the policy',save)
+        super().__init__('Test Policy', 'Menu item is used to train the policy',save)
 
     def exec(self,models,dataset):
         #get the policyDataset 

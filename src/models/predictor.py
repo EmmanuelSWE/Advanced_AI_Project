@@ -131,10 +131,11 @@ class Predictor:
         print(f"Results for predictor are: {results}")
 
     def showPrediction(self,dataset,index=0):
-        image,action,actualNext,_ = dataset.getItem(index)
+        image,action,actualNext,task = dataset.getItem(index)
         inputs = {
             "image":np.expand_dims(np.asarray(image,dtype=np.float32)/255.0, axis=0),
-            "action": np.expand_dims(np.asarray(action,dtype=np.float32), axis=0)
+            "action": np.expand_dims(np.asarray(action,dtype=np.float32), axis=0),
+            "task":  np.expand_dims(np.asarray(task,dtype=np.float32), axis=0)
 
         }
 

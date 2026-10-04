@@ -27,12 +27,6 @@ def makeDataset(name,demonStart,demonEnd,dsTyputie):
           tempDS.addToDataset((img,action,nxt_img,task))
 
   return tempDS
-      
-
-
-
-
-
 
 def getImage(arr):
   return imgUtils.loadImageFromPath(arr[4])

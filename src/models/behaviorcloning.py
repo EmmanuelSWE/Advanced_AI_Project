@@ -39,7 +39,7 @@ class CNN:
             inputs = {"image": image, "task" : task},
             outputs = action
         )
-        self.BATCH_SIZE = 10
+        self.BATCH_SIZE = 5
         self.history = None
 
         self.results = None
@@ -55,16 +55,17 @@ class CNN:
 
     def loadDataSet(self,dataset,batch):
         def pairs():
-           for i, action,task in dataset.contents:
+           for (i, action),task in dataset.contents:
                yield(
-                   {"image": np.array(i, dtype=np.float32) / 255.0, "task" :np.array(task, dtype=np.float32)},
-                   np.array(task,dtype=np.float32)
+                   {"image": np.array(i, dtype=np.float32) / 255.0, 
+                    "task" :np.array(task, dtype=np.float32)},
+                   np.array(action,dtype=np.float32)
                )
         
         return tf.data.Dataset.from_generator(
                    pairs,
                    output_signature=(
-                       {"iamge": tf.TensorSpec(shape=(480,480,3), dtype=tf.float32),
+                       {"image": tf.TensorSpec(shape=(480,480,3), dtype=tf.float32),
                         "task": tf.TensorSpec(shape=(3,), dtype=tf.float32)},
                        tf.TensorSpec(shape=(4,), dtype=tf.float32)
                    )

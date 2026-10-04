@@ -70,10 +70,10 @@ class Discrimintator:
 
 
         flatten = layers.Flatten()(x)
-        t = layers.Concatinate()[flatten,task]
+        t = layers.Concatenate()([flatten,task])
         choice= layers.Dense(1)(t)
 
-        self.model = tf.keras.Model(inputs= {"iamge" : image, "task": task},outputs =choice)
+        self.model = tf.keras.Model(inputs= {"image" : image, "task": task},outputs =choice)
         print(f'disc shape is {self.model.summary()}')
 
     def getLoss(self,real,fake):
@@ -94,7 +94,7 @@ def trainStep(gen,disc,images,tasks):
         genImages = gen.model({"action" : noise, "task" : tasks},training= True)
 
         real = disc.model({"image" : images, "task" : tasks}, training = True)
-        fake = disc.model({"image" : images, "task" : tasks}, training =True)
+        fake = disc.model({"image" : genImages, "task" : tasks}, training =True)
 
         lossforGen = gen.getLoss(fake)
 
@@ -113,6 +113,7 @@ def trainStep(gen,disc,images,tasks):
 
 def train_wagangp(gen,disc,dataset,epochs):
     fixedNoise = tf.random.normal([1,4])
+    fixedTask = tf.constant([[1.,0.,0.]],dtype=tf.float32)
     remove('gen_samples')
 
     os.makedirs("gen_samples",exist_ok=True)
@@ -138,7 +139,7 @@ def train_wagangp(gen,disc,dataset,epochs):
         print(f'EPICH {epoch + 1} GenLoss : {genLoss.numpy():.4f} discLoss{discLoss.numpy():.4f}')
 
         # make for each
-        genImage = gen.model(fixedNoise,training= False)[0].numpy()
+        genImage = gen.model({"action": fixedNoise, "task": fixedTask},training= False)[0].numpy()
         pixels = ((genImage+ 1) * 127.5).clip(0,255).astype(np.uint8)
         imageio.imwrite(f"gen_samples/epoch_{epoch +1}.png",pixels)
     return history
