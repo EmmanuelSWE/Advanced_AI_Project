@@ -8,6 +8,8 @@ import PIL.Image as Image
 import utils.plotter_utils as plotter
 import models.wgangp as WGAN
 import models.predictor as pred
+import models.cril_flow as cril
+import utils.const_list_utils as listUtils
 
 class MenuItem: 
     def __init__(self,name,description,save):
@@ -161,3 +163,30 @@ class predTest(MenuItem):
         pred.evaluateOnTest(predTestSet,30)
         pred.plotTestResults()
 
+
+
+class crilTrain(MenuItem):
+    def __init__(self,save,fullDs):
+        super().__init__("Train CRIL", "learn Tasks sequentially with genrated replay", save)
+
+        self.fullDs = fullDs 
+
+    def exec(self,models,dataset):
+        trainEnd = 80 if self.fullDs ==1 else 3 
+        valEnd = 90 if self.fullDs == 1 else 5 
+
+        reByTask = cril.makeRealByTask(listUtils.TASKS_CONST,
+                                       demoStart=1,
+                                       demoEnd= trainEnd ,
+                                       valStart= trainEnd + 1,
+                                       valEnd= valEnd)
+
+        cril.train_tasks(
+            taskOrder= listUtils.TASKS_CONST,
+            realByTask= reByTask,
+            policy= models["policy"],
+            gen = models["GAN"][0],
+            disc = models["GAN"][1],
+            pred = models["pred"]
+
+        )

@@ -51,7 +51,7 @@ class Generator:
        print(f'gen shape is {self.model.summary()}')
 
     def getLoss(self,output):
-        return crossEntropy(tf.ones_like(output), output)
+        return -tf.reduce_mean(output)
     
 
 
@@ -63,10 +63,10 @@ class Discrimintator:
         image = layers.Input((480,480,3), name = "image")
         task = layers.Input((3,), name = 'task')
         x = layers.Conv2D(64,5,strides=2,activation= tf.nn.leaky_relu,padding='same')(image)
-        x = layers.Dropout(0.3)(x)
+       
 
         x = layers.Conv2D(128,5,strides=2,activation=tf.nn.leaky_relu, padding='same')(x)
-        x = layers.Dropout(0.3)(x)
+        
 
 
         flatten = layers.Flatten()(x)
@@ -76,18 +76,38 @@ class Discrimintator:
         self.model = tf.keras.Model(inputs= {"image" : image, "task": task},outputs =choice)
         print(f'disc shape is {self.model.summary()}')
 
-    def getLoss(self,real,fake):
-        realLoss = crossEntropy(tf.ones_like(real), real)
-        fakeLoss = crossEntropy(tf.zeros_like(fake),fake)
-        totalLoss = realLoss + fakeLoss
-        return totalLoss
+    def getLoss(self,real,fake,penalty):
+        return (
+             tf.reduce_mean(fake) - tf.reduce_mean(real) + 10.0 * penalty
+        )
 
 
 
+def gradiantPenalty(disc,real,fake,tasks):
+     batchSize = tf.shape(real)[0]
+     alpha = tf.random.uniform((batchSize, 1,1 ,1),0.0, 1.0)
+
+     interpolated = (
+          real + alpha * (fake - real)
+     )
+
+     with tf.GradientTape() as gpTape:
+          gpTape.watch(interpolated)
+          scores = disc.model(
+               {"image": interpolated, "task": tasks},
+               training = True
+          )
+     gradiants = gpTape.gradient(scores, interpolated)
+     gradiants = tf.reshape(gradiants,(batchSize, -1))
+     norms = tf.sqrt(tf.reduce_sum(tf.square(gradiants),axis=1) + 1e-12)
+
+     return tf.reduce_mean(tf.square(norms-1.0))
 
 def trainStep(gen,disc,images,tasks):
 
+    batchSize = tf.shape(images)[0]
     noise = tf.random.normal([tf.shape(images)[0], 4])
+    
 
 
     with tf.GradientTape() as genTape, tf.GradientTape() as discTape:
@@ -96,9 +116,13 @@ def trainStep(gen,disc,images,tasks):
         real = disc.model({"image" : images, "task" : tasks}, training = True)
         fake = disc.model({"image" : genImages, "task" : tasks}, training =True)
 
+        penalty = gradiantPenalty(
+             disc,images,tf.stop_gradient(genImages),tasks
+        )
+
         lossforGen = gen.getLoss(fake)
 
-        lossforDisc =disc.getLoss(real,fake)
+        lossforDisc =disc.getLoss(real,fake,penalty)
 
        
 

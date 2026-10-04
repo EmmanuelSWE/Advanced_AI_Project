@@ -25,7 +25,8 @@ class Menu:
                           Items.ganTrain(save),
                           Items.ganTest(save),
                           Items.predTrain(save),
-                          Items.predTest(save)]
+                          Items.predTest(save),
+                          Items.crilTrain(save,fullDs)]
 
         
         trainEnd = 80 if fullDs == 1 else 3 
@@ -74,9 +75,7 @@ class Menu:
     def displayMenu(self):
         if(self.trainModels):
             print("IMMEDIETLEYTRAINING AND SAVING THE MODELS DOING NOTHING ELSE")
-            self.menuItems[0].exec(self.models,self.dataSets)
-            self.menuItems[2].exec(self.models,self.dataSets)
-            self.menuItems[4].exec(self.models,self.dataSets)
+            Items.crilTrain(self.save,self.fullDs).exec(self.models,self.dataSets)
             return
         blContinue = True
         while(blContinue):

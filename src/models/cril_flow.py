@@ -131,6 +131,26 @@ def makeRealByTask(taskOrder,demoStart,demoEnd,valStart,valEnd):
         policyVal = Dataset(f"{taskName}_policyVal")
         predVal = Dataset(f"{taskName}_predVal")
 
+        valTrajec = defaultdict(list)
+        for row in valRows:
+            if row[2] == taskName:
+                valTrajec[row[1]].append(row)
+
+        for rows in valTrajec.values():
+            rows.sort(key= lambda row:int(row[3]))
+            taskVector = listUtils.task_vector(rows[0])
+
+            for index, row in enumerate(rows):
+                image = imgUtils.loadImageFromPath(row[4])
+                action = np.fromstring(row[5].strip("[]"),sep= " ", dtype= np.float32)
+                policyVal.addToDataset(((image,action),taskVector))
+
+                if index +1 < len(rows):
+                    nextRow = rows[index + 1]
+                    if(int(nextRow[3]) == int(row[3]) + 1):
+                        nextImage = imgUtils.loadImageFromPath(nextRow[4])
+                        predVal.addToDataset((image,action,nextImage,taskVector))
+
         result[taskName] = {
             "policy" : policyData,
             "predictor": predData,
@@ -142,4 +162,4 @@ def makeRealByTask(taskOrder,demoStart,demoEnd,valStart,valEnd):
             "lenTrajec": min(lengths) if lengths else 0    
         } 
 
-        return result
+    return result
