@@ -5,7 +5,7 @@ import glob
 import imageio
 import matplotlib.pyplot as plt
 import os
-import PIL
+from PIL import Image
 from tensorflow.keras import layers
 import time
 from utils.const_list_utils import remove
@@ -166,8 +166,12 @@ def plotHistory(history,epochs):
 def loadDataSet(dataset,batch):
                 def pairs():
                    for i , task in dataset.contents:
-                       
-                       yield (np.array(i, dtype=np.float32) / 127.5 -1,
+                       if isinstance(i,str):
+                            with Image.open(i) as image:
+                                 imageArray = np.asarray(image.convert("RGB"), np.float32)
+                       else:
+                            imageArray = np.array(i, dtype=np.float32)
+                       yield (imageArray/ 127.5 -1,
                               np.asarray(task,np.float32))
 
 

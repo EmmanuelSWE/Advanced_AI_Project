@@ -83,7 +83,7 @@ class ganTrain(MenuItem):
 
 
 
-        genTrainSet = WGAN.loadDataSet(genTrainSet,4)
+        genTrainSet = WGAN.loadDataSet(genTrainSet,1)
         print("datasetLoaded")
         WGAN.plotHistory(WGAN.train_wagangp(gen,disc,genTrainSet,5),5)
         ("Training done ")
