@@ -57,7 +57,7 @@ class CNN:
         def pairs():
            for i, action,task in dataset.contents:
                yield(
-                   {"image": np.array(i, dtype=np.float32) / 255.0, "task" :task},
+                   {"image": np.array(i, dtype=np.float32) / 255.0, "task" :np.array(task, dtype=np.float32)},
                    np.array(task,dtype=np.float32)
                )
         
@@ -71,13 +71,17 @@ class CNN:
                ).shuffle(30).batch(batch)
 
     def identifyActions(self,img,task):
-        img = np.asanyarray(img, dtype=np.float32) / 255
-        img = np.expand_dims(img, axis = 0)
+
+        inputs = {
+            "image": np.expand_dims(np.asanyarray(img, dtype=np.float32) / 255.0, axis = 0),
+            "task": np.expand_dims(np.asanyarray(task, dtype=np.float32) , axis = 0)
+
+        }
 
        # print(img)
 
 
-        prediction = self.model.predict(img)
+        prediction = self.model.predict(inputs)
         print(f"prediction is {prediction}")
         
     def evaluateTraining(self,testSet):
