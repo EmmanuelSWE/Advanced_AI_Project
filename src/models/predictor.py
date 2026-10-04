@@ -11,6 +11,7 @@ class Predictor:
     def __init__(self):
         image = layers.Input((480,480,3), name= "image")
         action = layers.Input((4,), name= "action")
+        task = layers.Input((3,), name = 'task')
         # encoding Image
         x = layers.Conv2D(32,5,strides=2,padding="same",activation=tf.nn.relu)(image)
         x = layers.Conv2D(64,5,strides=2, padding='same',activation=tf.nn.relu)(x)
@@ -19,7 +20,13 @@ class Predictor:
         a = layers.Dense(8)(action)
         a= layers.RepeatVector(60*60)(a)
         a= layers.Reshape((60,60,8))(a)
-        shared = layers.Concatenate()([x,a])
+
+        #encoding task 
+        t = layers.Dense(8)(task)
+        t= layers.RepeatVector(60*60)(t)
+        t= layers.Reshape((60,60,8))(t)
+
+        shared = layers.Concatenate()([x,a,t])
 
         #Decode the image
         y = layers.Conv2DTranspose(64,5,strides=2,padding="same",activation=tf.nn.relu)(shared)
@@ -27,7 +34,7 @@ class Predictor:
         nextImage = layers.Conv2DTranspose(3,5,strides=2,padding="same", activation='sigmoid',name="nextImage")(y)
 
         self.model = tf.keras.Model(
-            inputs={"image":image, "action": action},
+            inputs={"image":image, "action": action, "task":task},
             outputs={"nextImage":nextImage}
         )
 
@@ -153,10 +160,11 @@ class Predictor:
 
     def loadDataSet(self,dataset,batch):
         def samples():
-            for image, action,nextImage, nexrAction in dataset.contents:
+            for image,action,nextImage, task in dataset.contents:
                 inputs = {
                     "image": np.asarray(image,np.float32)/255.0,
-                    "action":np.asarray(action,np.float32)
+                    "action":np.asarray(action,np.float32),
+                    "task":np.asarray(task,np.float32)
                 }
                 targets = {
                     "nextImage" :np.asarray(nextImage,np.float32)/255.0,
@@ -169,7 +177,8 @@ class Predictor:
             output_signature=(
                 {
                     "image": tf.TensorSpec((480,480,3),tf.float32),
-                    "action": tf.TensorSpec((4,),tf.float32)
+                    "action": tf.TensorSpec((4,),tf.float32),
+                    "task": tf.TensorSpec((3,),tf.float32)
 
                 },
                 {

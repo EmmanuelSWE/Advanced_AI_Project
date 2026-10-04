@@ -21,8 +21,12 @@ crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 class Generator:
     def __init__(self):
+
+       self.optimizer = tf.keras.optimizers.Adam(1e-4)
        action = layers.Input((4,), name = "action")
-       x = layers.Dense(15*15*256, activation=tf.nn.leaky_relu, use_bias=False)(action)
+       task = layers.Input((3,), name ="task")
+       x =  layers.Concatenate()([action,task])
+       x = layers.Dense(15*15*256, activation=tf.nn.leaky_relu, use_bias=False)(x)
        x = layers.BatchNormalization()(x)
 
        x = layers.Reshape((15,15,256))(x)
@@ -41,7 +45,7 @@ class Generator:
 
        image= layers.Conv2DTranspose(3,5,strides=2,padding='same',use_bias=False, activation=tf.nn.tanh)(x)
        
-       self.model = tf.keras.Model(inputs = action, outputs = image)
+       self.model = tf.keras.Model(inputs = {"action":action, "task":task}, outputs = image)
 
 
        print(f'gen shape is {self.model.summary()}')
@@ -55,18 +59,21 @@ class Generator:
 
 class Discrimintator: 
     def __init__(self):
-
+        self.optimizer = tf.keras.optimizers.Adam(1e-4)
         image = layers.Input((480,480,3), name = "image")
+        task = layers.Input((3,), name = 'task')
         x = layers.Conv2D(64,5,strides=2,activation= tf.nn.leaky_relu,padding='same')(image)
         x = layers.Dropout(0.3)(x)
 
         x = layers.Conv2D(128,5,strides=2,activation=tf.nn.leaky_relu, padding='same')(x)
         x = layers.Dropout(0.3)(x)
 
-        flatten = layers.Flatten()(x)
-        choice= layers.Dense(1)(flatten)
 
-        self.model = tf.keras.Model(inputs= image,outputs =choice)
+        flatten = layers.Flatten()(x)
+        t = layers.Concatinate()[flatten,task]
+        choice= layers.Dense(1)(t)
+
+        self.model = tf.keras.Model(inputs= {"iamge" : image, "task": task},outputs =choice)
         print(f'disc shape is {self.model.summary()}')
 
     def getLoss(self,real,fake):
@@ -78,16 +85,16 @@ class Discrimintator:
 
 
 
-def trainStep(gen,disc,images):
+def trainStep(gen,disc,images,tasks):
 
     noise = tf.random.normal([tf.shape(images)[0], 4])
 
 
     with tf.GradientTape() as genTape, tf.GradientTape() as discTape:
-        genImages = gen.model(noise,training= True)
+        genImages = gen.model({"action" : noise, "task" : tasks},training= True)
 
-        real = disc.model(images, training = True)
-        fake = disc.model(genImages, training =True)
+        real = disc.model({"image" : images, "task" : tasks}, training = True)
+        fake = disc.model({"image" : images, "task" : tasks}, training =True)
 
         lossforGen = gen.getLoss(fake)
 
@@ -98,8 +105,8 @@ def trainStep(gen,disc,images):
     gradforGen = genTape.gradient(lossforGen, gen.model.trainable_variables)
     gradforDisc = discTape.gradient(lossforDisc, disc.model.trainable_variables)
     
-    genOptimizer.apply_gradients(zip(gradforGen, gen.model.trainable_variables))
-    discOptimzer.apply_gradients(zip(gradforDisc, disc.model.trainable_variables))
+    gen.optimizer.apply_gradients(zip(gradforGen, gen.model.trainable_variables))
+    disc.optimizer.apply_gradients(zip(gradforDisc, disc.model.trainable_variables))
 
     return lossforGen, lossforDisc
 
@@ -120,8 +127,8 @@ def train_wagangp(gen,disc,dataset,epochs):
         #print(images.shape)
         #genLoss, discLoss =trainStep(gen,disc,images)
 
-        for images in dataset:
-             genLoss, discLoss = trainStep(gen,disc,images=images)
+        for images,tasks in dataset:
+             genLoss, discLoss = trainStep(gen,disc,images=images,tasks=tasks)
              genLosses.append(float(genLoss.numpy()))
              discLosses.append(float(discLoss.numpy()))
 
@@ -157,10 +164,13 @@ def plotHistory(history,epochs):
 
 def loadDataSet(dataset,batch):
                 def pairs():
-                   for i in dataset.contents:
-                       yield np.array(i, dtype=np.float32) / 127.5 -1 
+                   for i , task in dataset.contents:
+                       
+                       yield (np.array(i, dtype=np.float32) / 127.5 -1,
+                              np.asarray(task,np.float32))
+
 
                 return tf.data.Dataset.from_generator(
                            pairs,
-                           output_signature= tf.TensorSpec(shape=(480,480,3), dtype=tf.float32),
+                           output_signature=( tf.TensorSpec(shape=(480,480,3), dtype=tf.float32),tf.TensorSpec(shape=(3,), dtype=tf.float32))
                        ).shuffle(30).batch(batch)

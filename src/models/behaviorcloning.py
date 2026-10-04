@@ -16,6 +16,8 @@ class CNN:
     def __init__(self):
 
         image = layers.Input((480,480,3) ,name="image")
+        task = layers.Input((3,),name="task")
+
 
         #input layer
         x= layers.Conv2D(32,5,padding='same',activation=tf.nn.leaky_relu)(image)
@@ -29,11 +31,12 @@ class CNN:
         x = layers.MaxPool2D(2,2)(x)
 
         flatten = layers.Flatten()(x)
-        y = layers.Dense(300)(flatten)
+        t = layers.Concatenate()([flatten,task])
+        y = layers.Dense(300)(t)
         action= layers.Dense(4)(y)
 
         self.model = tf.keras.Model(
-            inputs = image,
+            inputs = {"image": image, "task" : task},
             outputs = action
         )
         self.BATCH_SIZE = 10
@@ -52,21 +55,22 @@ class CNN:
 
     def loadDataSet(self,dataset,batch):
         def pairs():
-           for i, action in dataset.contents:
+           for i, action,task in dataset.contents:
                yield(
-                   np.array(i, dtype=np.float32) / 255.0,
-                   np.array(action,dtype=np.float32)
+                   {"image": np.array(i, dtype=np.float32) / 255.0, "task" :task},
+                   np.array(task,dtype=np.float32)
                )
         
         return tf.data.Dataset.from_generator(
                    pairs,
                    output_signature=(
-                       tf.TensorSpec(shape=(480,480,3), dtype=tf.float32),
+                       {"iamge": tf.TensorSpec(shape=(480,480,3), dtype=tf.float32),
+                        "task": tf.TensorSpec(shape=(3,), dtype=tf.float32)},
                        tf.TensorSpec(shape=(4,), dtype=tf.float32)
                    )
                ).shuffle(30).batch(batch)
 
-    def identifyActions(self,img):
+    def identifyActions(self,img,task):
         img = np.asanyarray(img, dtype=np.float32) / 255
         img = np.expand_dims(img, axis = 0)
 

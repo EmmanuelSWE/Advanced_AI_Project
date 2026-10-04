@@ -8,21 +8,23 @@ import numpy as np
 
 
 def makeDataset(name,demonStart,demonEnd,dsTyputie):
+  
   contents = []
   contents = csvUtils.readFile(demonEnd,demonStart) # getting all the contents needed for the dataset based on the amount needed 
   tempDS = Dataset(name)
   for i, content in enumerate(contents):
+    task = listUtils.task_vector(content)
     if dsTyputie == 1:
-      tempDS.addToDataset(getImage(content)) # generator
+      tempDS.addToDataset((getImage(content), task)) # generator
     elif dsTyputie ==2:
-      tempDS.addToDataset(getImageAndAction(content)) # behavioral cloning
+      tempDS.addToDataset((getImageAndAction(content), task)) # behavioral cloning
     else: 
       if(i +1 < len(contents) -1 ):
         if(getDemo(content) == getDemo(contents[i+1]) and content[2] == contents[i+1][2]):
           #if this condition is reached then we can make the 4 actions togeth
           img,action = getImageAndAction(content)
           nxt_img, nxt_action = getImageAndAction(contents[i+1])
-          tempDS.addToDataset((img,action,nxt_img,nxt_action))
+          tempDS.addToDataset((img,action,nxt_img,task))
 
   return tempDS
       
