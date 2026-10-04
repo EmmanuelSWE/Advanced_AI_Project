@@ -8,6 +8,7 @@ import os
 import PIL
 from tensorflow.keras import layers
 import time
+from utils.const_list_utils import remove
 
 #making the logs
 import logging
@@ -20,36 +21,29 @@ crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 class Generator:
     def __init__(self):
-       self.model = tf.keras.Sequential()
-       self.model.add(layers.Dense(15*15*256,use_bias=False, input_shape=(4,)))
-       self.model.add(layers.BatchNormalization())
-       self.model.add(layers.LeakyReLU())
+       action = layers.Input((4,), name = "action")
+       x = layers.Dense(15*15*256, activation=tf.nn.leaky_relu, use_bias=False)(action)
+       x = layers.BatchNormalization()(x)
 
-       self.model.add(layers.Reshape((15,15,256)))
-       assert self.model.output_shape == (None, 15,15,256)
+       x = layers.Reshape((15,15,256))(x)
 
-       self.model.add(layers.Conv2DTranspose(128, (5,5), strides=(2,2), padding='same', use_bias=False))
-       assert self.model.output_shape == (None,30,30, 128)
-       self.model.add(layers.BatchNormalization())
-       self.model.add(layers.LeakyReLU())
+       x= layers.Conv2DTranspose(128,5,strides=2,padding='same',use_bias=False, activation=tf.nn.leaky_relu)(x)
+       x = layers.BatchNormalization()(x)
 
-       self.model.add(layers.Conv2DTranspose(64, (5,5), strides=(2,2), padding='same', use_bias=False))
-       assert self.model.output_shape == (None,60,60, 64)
-       self.model.add(layers.BatchNormalization())
-       self.model.add(layers.LeakyReLU())
+       x= layers.Conv2DTranspose(64,5,strides=2,padding='same',use_bias=False, activation=tf.nn.leaky_relu)(x)
+       x = layers.BatchNormalization()(x)
 
-       self.model.add(layers.Conv2DTranspose(32, (5,5), strides=(2,2), padding='same', use_bias=False))
-       assert self.model.output_shape == (None,120,120, 32)
-       self.model.add(layers.BatchNormalization())
-       self.model.add(layers.LeakyReLU())
+       x= layers.Conv2DTranspose(32,5,strides=2,padding='same',use_bias=False, activation=tf.nn.leaky_relu)(x)
+       x = layers.BatchNormalization()(x)
 
-       self.model.add(layers.Conv2DTranspose(16, (5,5), strides=(2,2), padding='same', use_bias=False))
-       assert self.model.output_shape == (None,240,240, 16)
-       self.model.add(layers.BatchNormalization())
-       self.model.add(layers.LeakyReLU())
+       x= layers.Conv2DTranspose(16,5,strides=2,padding='same',use_bias=False, activation=tf.nn.leaky_relu)(x)
+       x = layers.BatchNormalization()(x)
 
-       self.model.add(layers.Conv2DTranspose(3, (5,5), strides=(2,2), padding='same', use_bias=False, activation='tanh'))
-       assert self.model.output_shape == (None,480,480, 3)
+       image= layers.Conv2DTranspose(3,5,strides=2,padding='same',use_bias=False, activation=tf.nn.tanh)(x)
+       
+       self.model = tf.keras.Model(inputs = action, outputs = image)
+
+
        print(f'gen shape is {self.model.summary()}')
 
     def getLoss(self,output):
@@ -61,17 +55,18 @@ class Generator:
 
 class Discrimintator: 
     def __init__(self):
-        self.model = tf.keras.Sequential()
-        self.model.add(layers.Conv2D(64, (5,5), strides = (2,2), padding='same', input_shape= [480,480,3]))
-        self.model.add(layers.LeakyReLU())
-        self.model.add(layers.Dropout(0.3))
 
-        self.model.add(layers.Conv2D(128, (5,5), strides = (2,2), padding='same'))
-        self.model.add(layers.LeakyReLU())
-        self.model.add(layers.Dropout(0.3))
+        image = layers.Input((480,480,3), name = "image")
+        x = layers.Conv2D(64,5,strides=2,activation= tf.nn.leaky_relu,padding='same')(image)
+        x = layers.Dropout(0.3)(x)
 
-        self.model.add(layers.Flatten())
-        self.model.add(layers.Dense(1))
+        x = layers.Conv2D(128,5,strides=2,activation=tf.nn.leaky_relu, padding='same')(x)
+        x = layers.Dropout(0.3)(x)
+
+        flatten = layers.Flatten()(x)
+        choice= layers.Dense(1)(flatten)
+
+        self.model = tf.keras.Model(inputs= image,outputs =choice)
         print(f'disc shape is {self.model.summary()}')
 
     def getLoss(self,real,fake):
@@ -81,8 +76,7 @@ class Discrimintator:
         return totalLoss
 
 
-genOptimizer = tf.keras.optimizers.Adam(1e-4)
-discOptimzer = tf.keras.optimizers.Adam(1e-4)
+
 
 def trainStep(gen,disc,images):
 
@@ -109,16 +103,30 @@ def trainStep(gen,disc,images):
 
     return lossforGen, lossforDisc
 
+
 def train_wagangp(gen,disc,dataset,epochs):
     fixedNoise = tf.random.normal([1,4])
+    remove('gen_samples')
+
     os.makedirs("gen_samples",exist_ok=True)
+    history = {"gen_loss": [], "disc_loss": []}
 
     for epoch in range(epochs):
         start = time.time()
+        genLosses = []
+        discLosses = []
 
-        images = next(iter(dataset))
-        print(images.shape)
-        genLoss, discLoss =trainStep(gen,disc,images)
+        #images = next(iter(dataset))
+        #print(images.shape)
+        #genLoss, discLoss =trainStep(gen,disc,images)
+
+        for images in dataset:
+             genLoss, discLoss = trainStep(gen,disc,images=images)
+             genLosses.append(float(genLoss.numpy()))
+             discLosses.append(float(discLoss.numpy()))
+
+        history['gen_loss'].append(np.mean(genLosses))
+        history['disc_loss'].append(np.mean(discLosses))
 
         print(f'EPICH {epoch + 1} GenLoss : {genLoss.numpy():.4f} discLoss{discLoss.numpy():.4f}')
 
@@ -126,9 +134,26 @@ def train_wagangp(gen,disc,dataset,epochs):
         genImage = gen.model(fixedNoise,training= False)[0].numpy()
         pixels = ((genImage+ 1) * 127.5).clip(0,255).astype(np.uint8)
         imageio.imwrite(f"gen_samples/epoch_{epoch +1}.png",pixels)
+    return history
         
 
+def plotHistory(history,epochs):
+     fig, axes = plt.subplots(1,2,figsize = (11,4))
+     epochs = range(1,len(history['gen_loss']) + 1)
 
+     axes[0].plot(epochs,history['gen_loss'],marker="o")
+     axes[0].set_title("GeneratorLoss")
+     axes[1].plot(epochs, history["disc_loss"],marker="^")
+     axes[1].set_title("Discriminator Loss")
+
+     for ax in axes:
+          ax.set_xlabel("Epoch")
+          ax.set_ylabel("Loss")
+          ax.grid(True)
+
+     plt.tight_layout()
+     plt.savefig("GAN_Trained_Losses.png",dpi = 150)
+     
 
 def loadDataSet(dataset,batch):
                 def pairs():

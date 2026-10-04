@@ -4,6 +4,8 @@ import numpy as np
 import  matplotlib.pyplot
 from datasets.dataset import Dataset
 import matplotlib.pyplot as plt
+import os
+from tensorflow.keras import layers
 
 #making the logs
 import logging
@@ -12,19 +14,31 @@ logger.setLevel(logging.ERROR)
 
 class CNN:
     def __init__(self):
+
+        image = layers.Input((480,480,3) ,name="image")
+
+        #input layer
+        x= layers.Conv2D(32,5,padding='same',activation=tf.nn.leaky_relu)(image)
+
+        #x = hidden layer
+        x = layers.MaxPool2D(2,2)(x)
+        x= layers.Conv2D(64,5,padding='same',activation=tf.nn.leaky_relu)(x)
+        x = layers.MaxPool2D(2,2)(x)
+
+        x= layers.Conv2D(64,5,padding='same',activation=tf.nn.leaky_relu)(x)
+        x = layers.MaxPool2D(2,2)(x)
+
+        flatten = layers.Flatten()(x)
+        y = layers.Dense(300)(flatten)
+        action= layers.Dense(4)(y)
+
+        self.model = tf.keras.Model(
+            inputs = image,
+            outputs = action
+        )
         self.BATCH_SIZE = 10
-        self.input = tf.keras.layers.Conv2D(32, (5,5), activation=tf.nn.leaky_relu, padding='same',input_shape=(480,480,3),)
-        self.m1 = tf.keras.layers.MaxPool2D(2,2)
-        self.hidden1 = tf.keras.layers.Conv2D(64, (5,5),activation=tf.nn.leaky_relu,padding='same')
-        self.m2=tf.keras.layers.MaxPool2D(2,2)
-        self.hidden2 = tf.keras.layers.Conv2D(64, (5,5),activation=tf.nn.leaky_relu,padding='same')
-        self.m3=tf.keras.layers.MaxPool2D(2,2)
-        self.flatten = tf.keras.layers.Flatten()
-        self.hidden3= tf.keras.layers.Dense(300)
-        self.output= tf.keras.layers.Dense(4)
         self.history = None
 
-        self.model = tf.keras.models.Sequential([self.input,self.m1,self.hidden1,self.m2,self.hidden2,self.m3,self.flatten,self.hidden3,self.output])
         self.results = None
 
     def behavior_cloning(self,trainSet,valSet):
@@ -32,7 +46,8 @@ class CNN:
         dsTrain = self.loadDataSet(trainSet,self.BATCH_SIZE)
         dsVal = self.loadDataSet(valSet,self.BATCH_SIZE)
         self.model.compile(optimizer='adam',loss= tf.keras.losses.MeanSquaredError(), metrics=['MAE'])
-        history = self.model.fit(dsTrain, epochs=5, steps_per_epoch=math.ceil(30/self.BATCH_SIZE),validation_data=dsVal)
+        history = self.model.fit(dsTrain, epochs=5, validation_data=dsVal)
+        
         self.history = history
 
     def loadDataSet(self,dataset,batch):
@@ -67,7 +82,7 @@ class CNN:
         
         results = self.model.evaluate(dsTest,return_dict=True)
         self.results = results
-        print(f"Results Are: {results}")
+        print(f"Results for policy Are: {results}")
         
 
     def plotTestData(self):
@@ -81,11 +96,11 @@ class CNN:
             
             plt.figure(figsize=(8,8))
             plt.subplot(2,1,1)
-            plt.bar(acc,label= 'Training Accuracy,',height= 10)
+            plt.bar(acc,label= 'Training MAE,',height= 10)
           
             plt.legend(loc='lower right')
-            plt.ylabel('Accurarcy')
-            plt.title('Training and vAlidation Accuracy')
+            plt.ylabel('MAE')
+            plt.title('Test MAE')
             
             
             plt.subplot(2,1,2)
@@ -98,6 +113,7 @@ class CNN:
             
             # save the image
             plt.tight_layout()
+            os.remove("policy_Tested.png")
             plt.savefig('policy_Tested.png', dpi=150)
             
             
@@ -134,9 +150,5 @@ class CNN:
 
             # save the image
             plt.tight_layout()
+            os.remove("policy_Trained.png")
             plt.savefig('policy_Trained.png', dpi=150)
-
-
-
-
-
