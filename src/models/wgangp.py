@@ -124,6 +124,12 @@ def trainStep(gen,disc,images,tasks):
 
         lossforDisc =disc.getLoss(real,fake,penalty)
 
+        tf.print(
+             'real score:', tf.reduce_mean(real),
+             'fakescore', tf.reduce_mean(fake),
+             "penalty", penalty
+        )
+
        
 
     gradforGen = genTape.gradient(lossforGen, gen.model.trainable_variables)
