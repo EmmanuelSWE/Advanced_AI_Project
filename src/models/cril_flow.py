@@ -92,7 +92,7 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
                         predData.addToDataset((image,action,nextImage,taskVector))
         print(f"training Task {taskNum + 1} : {taskName}")
         policy.behavior_cloning(policyData,real["policyVal"])
-        pred.train(predData, real["predVal"],epochs = 5, batch = 30)
+        pred.train(predData, real["predVal"],epochs = 5, batch = 1)
         ganBatches = WGAN.loadDataSet(ganData,batch=1)
         WGAN.train_wagangp(gen,disc,ganBatches,epochs=5)
         allResults[taskName] = testLearnedTasks(taskOrder=taskOrder, learnedCount=taskNum + 1 , testByTask=testByTask,policy=policy,pred=pred)
