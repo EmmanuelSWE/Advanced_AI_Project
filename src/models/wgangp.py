@@ -27,7 +27,6 @@ class Generator:
        task = layers.Input((3,), name ="task")
        x =  layers.Concatenate()([action,task])
        x = layers.Dense(15*15*256, activation=tf.nn.leaky_relu, use_bias=False)(x)
-       x = layers.BatchNormalization()(x)
 
        x = layers.Reshape((15,15,256))(x)
 
