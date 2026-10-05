@@ -5,6 +5,8 @@ import  matplotlib.pyplot
 from datasets.dataset import Dataset
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers
+import utils.image_utils as imgUtils 
+
 import os
 
 class Predictor:
@@ -162,13 +164,15 @@ class Predictor:
     def loadDataSet(self,dataset,batch):
         def samples():
             for image,action,nextImage, task in dataset.contents:
+                imgArray = imgUtils.imageArray(image)
+                nextImgArray = imgUtils.imageArray(nextImage)
                 inputs = {
-                    "image": np.asarray(image,np.float32)/255.0,
+                    "image": imgArray.astype(np.float32)/255.0,
                     "action":np.asarray(action,np.float32),
                     "task":np.asarray(task,np.float32)
                 }
                 targets = {
-                    "nextImage" :np.asarray(nextImage,np.float32)/255.0,
+                    "nextImage" :nextImgArray.astype(np.float32)/255.0,
                 }
                 yield inputs, targets 
 

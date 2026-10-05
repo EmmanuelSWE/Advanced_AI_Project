@@ -4,7 +4,7 @@ import time
 from pathlib import Path 
 from utils.const_list_utils import GEN_PATH_CONST as genPath
 from utils.const_list_utils import remove
-
+import numpy as np
 
 def createImagePaths(arrNames):
     remove(genPath) # first remove
@@ -32,4 +32,9 @@ def getSize(image):
 
 
 
-    
+def imageArray(value):
+    if isinstance(value, (str, Path)):
+        with Image.open(value) as image:
+            return np.array(image.convert("RGB"), dtype= np.uint8, copy = True)
+
+    return np.array(value, dtype=np.uint8, copy= True)

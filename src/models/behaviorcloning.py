@@ -6,6 +6,7 @@ from datasets.dataset import Dataset
 import matplotlib.pyplot as plt
 import os
 from tensorflow.keras import layers
+import utils.image_utils as imgUtils
 
 #making the logs
 import logging
@@ -39,7 +40,7 @@ class CNN:
             inputs = {"image": image, "task" : task},
             outputs = action
         )
-        self.BATCH_SIZE = 5
+        self.BATCH_SIZE = 1
         self.history = None
 
         self.results = None
@@ -56,8 +57,9 @@ class CNN:
     def loadDataSet(self,dataset,batch):
         def pairs():
            for (i, action),task in dataset.contents:
+               imageAarry = imgUtils.imageArray(i)
                yield(
-                   {"image": np.array(i, dtype=np.float32) / 255.0, 
+                   {"image": imageAarry.astype(np.float32)/ 255.0, 
                     "task" :np.array(task, dtype=np.float32)},
                    np.array(action,dtype=np.float32)
                )

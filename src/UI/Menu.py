@@ -18,36 +18,6 @@ class Menu:
         self.trainModels = trainModels
         self.save = save
 
-
-        print(f"loading menu Items")
-        self.menuItems = [Items.policyTrain(save),
-                          Items.policyTest(save),
-                          Items.ganTrain(save),
-                          Items.ganTest(save),
-                          Items.predTrain(save),
-                          Items.predTest(save),
-                          Items.crilTrain(save,fullDs)]
-
-        
-        trainEnd = 80 if fullDs == 1 else 3 
-        valEnd = 90 if fullDs == 1 else 5 
-        testEnd = 100 if fullDs == 1 else 7
-        
-        self.dataSets = { "policy": [
-            dsUtils.makeDataset('test',1,trainEnd,2),
-            dsUtils.makeDataset('test',trainEnd +1,valEnd,2),
-            dsUtils.makeDataset('test',valEnd+1,testEnd,2)
-        ],
-                         "GAN":[
-                             dsUtils.makeDataset('test',1,trainEnd,1),
-                             dsUtils.makeDataset('test',trainEnd +1,valEnd,1),
-                             dsUtils.makeDataset('test',valEnd+1,testEnd,1)
-                         ],
-                         "pred": [dsUtils.makeDataset('test',1,trainEnd,3),
-                                     dsUtils.makeDataset('test',trainEnd +1,valEnd,3),
-                                     dsUtils.makeDataset('test',valEnd+1,testEnd,3)]}
-
-
         self.models = {"policy": CNN(),
                        "GAN": [WGAN.Generator(),
                               WGAN.Discrimintator() ],
@@ -59,6 +29,18 @@ class Menu:
             self.models["GAN"][1].model = tf.keras.load_model("critic_model.keras")
             self.models["pred"].model = tf.keras.load_model("predictor_model.keras")
 
+        print(f"loading menu Items")
+        self.menuItems = [Items.policyTrain(save),
+                          Items.policyTest(save),
+                          Items.ganTrain(save),
+                          Items.ganTest(save),
+                          Items.predTrain(save),
+                          Items.predTest(save),
+                          Items.crilTrain(save,fullDs)]
+
+    
+        
+        self.dataSets= {}
         
         print(f"Items Loaded")
 
@@ -75,8 +57,29 @@ class Menu:
     def displayMenu(self):
         if(self.trainModels):
             print("IMMEDIETLEYTRAINING AND SAVING THE MODELS DOING NOTHING ELSE")
+            self.dataSets = {}
             Items.crilTrain(self.save,self.fullDs).exec(self.models,self.dataSets)
             return
+        else :
+            trainEnd = 80 if self.fullDs == 1 else 3 
+            valEnd = 90 if self.fullDs == 1 else 5 
+            testEnd = 100 if self.fullDs == 1 else 7
+            self.dataSets = { "policy": [
+                dsUtils.makeDataset('test',1,trainEnd,2),
+                dsUtils.makeDataset('test',trainEnd +1,valEnd,2),
+                dsUtils.makeDataset('test',valEnd+1,testEnd,2)
+            ],
+                             "GAN":[
+                                 dsUtils.makeDataset('test',1,trainEnd,1),
+                                 dsUtils.makeDataset('test',trainEnd +1,valEnd,1),
+                                 dsUtils.makeDataset('test',valEnd+1,testEnd,1)
+                             ],
+                             "pred": [dsUtils.makeDataset('test',1,trainEnd,3),
+                                         dsUtils.makeDataset('test',trainEnd +1,valEnd,3),
+                                         dsUtils.makeDataset('test',valEnd+1,testEnd,3)]}
+            
+            
+            
         blContinue = True
         while(blContinue):
             self.showOpener()
