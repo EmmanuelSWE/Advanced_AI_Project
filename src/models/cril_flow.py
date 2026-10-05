@@ -6,13 +6,16 @@ import utils.csv_utils as csvUtils
 from collections import defaultdict
 import utils.const_list_utils as listUtils
 import utils.image_utils as imgUtils
+from pathlib import Path
+import json
+import imageio.v3 as iio 
 
-
-def make_trajectory(gen,policy,predictor,taskVector,step =30):
+def make_trajectory(gen,policy,predictor,taskVector,step =30,noise=None):
     task = tf.convert_to_tensor(
         np.asarray(taskVector,dtype=np.float32).reshape(1,3)
     )
-    noise = tf.random.normal((1,4))
+    if noise is None:
+        noise = tf.random.normal((1,4))
 
     generated = gen.model(
         {"action": noise, "task": task}, training = False
@@ -52,7 +55,10 @@ def combinedDataset(name,realDataset):
     result.contents.extend(realDataset.contents)
     return result
 
-def train_tasks(taskOrder, realByTask, policy, gen,disc, pred):
+def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
+    allResults = {}
+    fixedNoise = tf.random.normal((1,4), seed=42)
+
     for taskNum, taskName in enumerate(taskOrder):
         real = realByTask[taskName]
 
@@ -89,6 +95,39 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred):
         pred.train(predData, real["predVal"],epochs = 5, batch = 30)
         ganBatches = WGAN.loadDataSet(ganData,batch=1)
         WGAN.train_wagangp(gen,disc,ganBatches,epochs=5)
+        allResults[taskName] = testLearnedTasks(taskOrder=taskOrder, learnedCount=taskNum + 1 , testByTask=testByTask,policy=policy,pred=pred)
+
+        stageDir = Path(f"/kaggle/working/cril_results/task_{taskNum + 1}") 
+        stageDir.mkdir(parents=True,exist_ok=True)
+
+        policy.model.save(f'{stageDir}/policy_model.keras')
+        pred.model.save(f'{stageDir}/predictor_model.keras')
+        gen.model.save(f'{stageDir}/generator_model.keras')
+        disc.model.save(f'{stageDir}/critic_model.keras')
+
+        for learnedTask in taskOrder[:taskNum +1 ]:
+            frameDir = stageDir/learnedTask
+            frameDir.mkdir(exist_ok=True)
+
+            trajec = make_trajectory(
+                gen,policy,pred,
+                taskVector=realByTask[learnedTask]["taskVector"],
+                step = 30,
+                noise= fixedNoise
+            )
+
+            iio.imwrite(f"{frameDir}/frame_000.png",pixels(trajec[0]["image"]))
+
+            for i, transition in enumerate(trajec,start=1):
+                iio.imwrite(f"{frameDir}/frame_{i:03d}.png",pixels(transition["nextImage"]))
+
+        resultsPath = Path(f"/kaggle/working/cril_results/testMetrics.json")
+        with resultsPath.open("w") as file:
+            json.dump(allResults,file,indent=2)
+
+
+
+    return allResults
 
 
 def makeRealByTask(taskOrder,demoStart,demoEnd,valStart,valEnd):
@@ -163,3 +202,30 @@ def makeRealByTask(taskOrder,demoStart,demoEnd,valStart,valEnd):
         } 
 
     return result
+
+
+def testLearnedTasks(taskOrder, learnedCount,testByTask,policy,pred):
+    results = {}
+
+    
+
+    for taskName in taskOrder[:learnedCount]:
+        test = testByTask[taskName]
+        policyTest = policy.loadDataSet( test['policy'], policy.BATCH_SIZE)
+        predTest = pred.loadDataSet(
+            test["predictor"],batch = 1
+        )
+        policyResult = policy.model.evaluate(
+            policyTest, return_dict = True, verbose=0
+        )
+        predResult = pred.model.evaluate(
+            predTest, return_dict = True, verbose = 0
+        )
+
+        results[taskName] = {
+            "policy": policyResult,
+            "predictor": predResult
+        }
+
+        print(f"Test After task {learnedCount}, {taskName}: {results[taskName]}")
+    return results

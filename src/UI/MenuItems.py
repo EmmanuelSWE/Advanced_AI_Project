@@ -174,12 +174,11 @@ class crilTrain(MenuItem):
     def exec(self,models,dataset):
         trainEnd = 80 if self.fullDs ==1 else 3 
         valEnd = 90 if self.fullDs == 1 else 5 
+        testEnd = 100 if self.fullDs == 1 else 7
 
-        reByTask = cril.makeRealByTask(listUtils.TASKS_CONST,
-                                       demoStart=1,
-                                       demoEnd= trainEnd ,
-                                       valStart= trainEnd + 1,
-                                       valEnd= valEnd)
+        reByTask = cril.makeRealByTask(listUtils.TASKS_CONST,1,trainEnd,trainEnd+1,valEnd)
+
+        testByTask = cril.makeRealByTask(listUtils.TASKS_CONST,valEnd + 1,testEnd,trainEnd+1,valEnd)
 
         cril.train_tasks(
             taskOrder= listUtils.TASKS_CONST,
@@ -187,6 +186,7 @@ class crilTrain(MenuItem):
             policy= models["policy"],
             gen = models["GAN"][0],
             disc = models["GAN"][1],
-            pred = models["pred"]
+            pred = models["pred"],
+            testByTask=testByTask
 
         )

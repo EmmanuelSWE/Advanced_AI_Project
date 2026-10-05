@@ -138,7 +138,6 @@ def trainStep(gen,disc,images,tasks):
 def train_wagangp(gen,disc,dataset,epochs):
     fixedNoise = tf.random.normal([1,4])
     fixedTask = tf.constant([[1.,0.,0.]],dtype=tf.float32)
-    remove('gen_samples')
 
     os.makedirs("gen_samples",exist_ok=True)
     history = {"gen_loss": [], "disc_loss": []}
