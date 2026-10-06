@@ -107,7 +107,7 @@ class CNN:
             
             plt.figure(figsize=(8,8))
             plt.subplot(2,1,1)
-            plt.bar(acc,label= 'Training MAE,',height= 10)
+            plt.bar('Training MAE',[acc])
           
             plt.legend(loc='lower right')
             plt.ylabel('MAE')
@@ -115,7 +115,7 @@ class CNN:
             
             
             plt.subplot(2,1,2)
-            plt.bar(loss,label= 'Training Loss',height= 10)
+            plt.bar('Training Loss',[loss])
            
             plt.legend(loc='lower right')
             plt.ylabel('Loss')

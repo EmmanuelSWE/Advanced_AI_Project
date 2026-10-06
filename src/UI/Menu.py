@@ -61,7 +61,7 @@ class Menu:
             Items.crilTrain(self.save,self.fullDs).exec(self.models,self.dataSets)
             return
         else :
-            trainEnd = 80 if self.fullDs == 1 else 3 
+            trainEnd = 40 if self.fullDs == 1 else 3 
             valEnd = 90 if self.fullDs == 1 else 5 
             testEnd = 100 if self.fullDs == 1 else 7
             self.dataSets = { "policy": [

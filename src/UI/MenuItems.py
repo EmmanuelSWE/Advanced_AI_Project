@@ -172,13 +172,14 @@ class crilTrain(MenuItem):
         self.fullDs = fullDs 
 
     def exec(self,models,dataset):
+        valStart = 81 if self.fullDs == 1 else 4
         trainEnd = 80 if self.fullDs ==1 else 3 
         valEnd = 90 if self.fullDs == 1 else 5 
         testEnd = 100 if self.fullDs == 1 else 7
 
-        reByTask = cril.makeRealByTask(listUtils.TASKS_CONST,1,trainEnd,trainEnd+1,valEnd)
+        reByTask = cril.makeRealByTask(listUtils.TASKS_CONST,1,trainEnd,valStart,valEnd)
 
-        testByTask = cril.makeRealByTask(listUtils.TASKS_CONST,valEnd + 1,testEnd,trainEnd+1,valEnd)
+        testByTask = cril.makeRealByTask(listUtils.TASKS_CONST,valEnd + 1,testEnd,valStart,valEnd)
 
         cril.train_tasks(
             taskOrder= listUtils.TASKS_CONST,

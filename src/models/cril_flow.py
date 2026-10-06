@@ -9,6 +9,8 @@ import utils.image_utils as imgUtils
 from pathlib import Path
 import json
 import imageio.v3 as iio 
+import gc
+import shutil
 
 def make_trajectory(gen,policy,predictor,taskVector,step =30,noise=None):
     task = tf.convert_to_tensor(
@@ -23,7 +25,7 @@ def make_trajectory(gen,policy,predictor,taskVector,step =30,noise=None):
 
     image = tf.clip_by_value((generated + 1.0)/2.0, 0.0,1.0)
 
-    trajec = [] 
+    
     for _ in range(step):
         action = policy.model(
             {"image": image, "task": task}, training= False
@@ -34,7 +36,7 @@ def make_trajectory(gen,policy,predictor,taskVector,step =30,noise=None):
             training = False
         )["nextImage"]
 
-        trajec.append({
+        yield ({
             "image": image[0].numpy(),
             "action": action[0].numpy(),
             "nextImage": nextImage[0].numpy(),
@@ -43,7 +45,6 @@ def make_trajectory(gen,policy,predictor,taskVector,step =30,noise=None):
 
         image = nextImage
 
-    return trajec
 
 
 
@@ -57,7 +58,7 @@ def combinedDataset(name,realDataset):
 
 def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
     allResults = {}
-    fixedNoise = tf.random.normal((1,4), seed=42)
+    fixedNoise = tf.random.stateless_normal((1, 4), seed=(42, 0))
 
     for taskNum, taskName in enumerate(taskOrder):
         real = realByTask[taskName]
@@ -67,35 +68,54 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
         ganData = combinedDataset("GAN", real["GAN"])
 
         
-        for oldTask in taskOrder[: taskNum]:
-                old = realByTask[oldTask]
-                taskVector = old["taskVector"]
+            # Temporary replay frames for this training stage.
+        replayDir = Path(
+            f"/kaggle/working/cril_replay/task_{taskNum + 1}"
+        )
 
-                for _ in range(old['numTrajec']):
-                    trajec = make_trajectory(
-                        gen,policy,pred,taskVector=taskVector, step=old["lenTrajec"]
+        for oldTask in taskOrder[:taskNum]:
+            old = realByTask[oldTask]
+            taskVector = old["taskVector"]
+
+            for demoIndex in range(old["numTrajec"]):
+                frameDir = replayDir / oldTask / f"demo_{demoIndex:03d}"
+                frameDir.mkdir(parents=True, exist_ok=True)
+
+                transitions = make_trajectory(
+                    gen, policy, pred,
+                    taskVector=taskVector,
+                    step=old["lenTrajec"],
+                )
+
+                for frameIndex, transition in enumerate(transitions):
+                    imagePath = frameDir / f"frame_{frameIndex:04d}.png"
+                    nextPath = frameDir / f"frame_{frameIndex + 1:04d}.png"
+
+                    # Write the starting frame once; each next frame becomes
+                    # the current frame of the following transition.
+                    if frameIndex == 0:
+                        iio.imwrite(imagePath, pixels(transition["image"]))
+                        ganData.addToDataset((str(imagePath), taskVector))
+
+                    iio.imwrite(nextPath, pixels(transition["nextImage"]))
+
+                    # Retain paths and the small action vector, not image arrays.
+                    action = transition["action"]
+                    policyData.addToDataset(
+                        ((str(imagePath), action), taskVector)
+                    )
+                    predData.addToDataset(
+                        (str(imagePath), action, str(nextPath), taskVector)
                     )
 
-                    first = trajec[0]
-                    ganData.addToDataset((
-                        pixels(first["image"]),
-                        taskVector
-                    ))
-
-                    for step in trajec:
-                        image = pixels(step["image"])
-                        nextImage = pixels(step["nextImage"])
-                        action = step["action"]
-
-                        policyData.addToDataset(((image,action), taskVector))
-
-                        predData.addToDataset((image,action,nextImage,taskVector))
+                # Release the final transition's arrays before the next demonstration.
+                if old["lenTrajec"] > 0:
+                    del transition
         print(f"training Task {taskNum + 1} : {taskName}")
         policy.behavior_cloning(policyData,real["policyVal"])
-        pred.train(predData, real["predVal"],epochs = 30, batch = 1)
+        pred.train(predData, real["predVal"],epochs = 5, batch = 1)
         ganBatches = WGAN.loadDataSet(ganData,batch=1)
-        WGAN.train_wagangp(gen,disc,ganBatches,epochs=5)
-        allResults[taskName] = testLearnedTasks(taskOrder=taskOrder, learnedCount=taskNum + 1 , testByTask=testByTask,policy=policy,pred=pred)
+        WGAN.train_wagangp(gen,disc,ganBatches,epochs=30)
 
         stageDir = Path(f"/kaggle/working/cril_results/task_{taskNum + 1}") 
         stageDir.mkdir(parents=True,exist_ok=True)
@@ -105,25 +125,41 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
         gen.model.save(f'{stageDir}/generator_model.keras')
         disc.model.save(f'{stageDir}/critic_model.keras')
 
+        allResults[taskName] = testLearnedTasks(taskOrder=taskOrder, learnedCount=taskNum + 1 , testByTask=testByTask,policy=policy,pred=pred)
+
+
         for learnedTask in taskOrder[:taskNum +1 ]:
             frameDir = stageDir/learnedTask
             frameDir.mkdir(exist_ok=True)
 
-            trajec = make_trajectory(
-                gen,policy,pred,
+            transitions = make_trajectory(
+                gen, policy, pred,
                 taskVector=realByTask[learnedTask]["taskVector"],
-                step = 30,
-                noise= fixedNoise
+                step=30,
+                noise=fixedNoise,
             )
 
-            iio.imwrite(f"{frameDir}/frame_000.png",pixels(trajec[0]["image"]))
+            for i, transition in enumerate(transitions):
+                if i == 0:
+                    iio.imwrite(
+                        frameDir / "frame_000.png",
+                        pixels(transition["image"]),
+                    )
 
-            for i, transition in enumerate(trajec,start=1):
-                iio.imwrite(f"{frameDir}/frame_{i:03d}.png",pixels(transition["nextImage"]))
+                iio.imwrite(
+                    frameDir / f"frame_{i + 1:03d}.png",
+                    pixels(transition["nextImage"]),
+                )
 
         resultsPath = Path(f"/kaggle/working/cril_results/testMetrics.json")
         with resultsPath.open("w") as file:
             json.dump(allResults,file,indent=2)
+
+        del policyData, predData, ganData, ganBatches
+        gc.collect()
+
+        if replayDir.exists():
+            shutil.rmtree(replayDir)
 
 
 
@@ -155,7 +191,7 @@ def makeRealByTask(taskOrder,demoStart,demoEnd,valStart,valEnd):
             ganData.addToDataset((rows[0][4], taskVector))
 
             for index,row in enumerate(rows):
-                image = imgUtils.loadImageFromPath(row[4])
+                image = row[4]
                 action = np.fromstring(row[5].strip('[]'),sep=" ",dtype=np.float32)
 
                 policyData.addToDataset(((image,action),taskVector))
@@ -164,7 +200,7 @@ def makeRealByTask(taskOrder,demoStart,demoEnd,valStart,valEnd):
                     nextRow = rows[index+1]
 
                     if(int(nextRow[3]) == int(row[3]) + 1):
-                        nextImage = imgUtils.loadImageFromPath(nextRow[4])
+                        nextImage = nextRow[4]
                         predData.addToDataset((image,action,nextImage,taskVector))
 
         policyVal = Dataset(f"{taskName}_policyVal")
@@ -180,14 +216,14 @@ def makeRealByTask(taskOrder,demoStart,demoEnd,valStart,valEnd):
             taskVector = listUtils.task_vector(rows[0])
 
             for index, row in enumerate(rows):
-                image = imgUtils.loadImageFromPath(row[4])
+                image = row[4]
                 action = np.fromstring(row[5].strip("[]"),sep= " ", dtype= np.float32)
                 policyVal.addToDataset(((image,action),taskVector))
 
                 if index +1 < len(rows):
                     nextRow = rows[index + 1]
                     if(int(nextRow[3]) == int(row[3]) + 1):
-                        nextImage = imgUtils.loadImageFromPath(nextRow[4])
+                        nextImage = nextRow[4]
                         predVal.addToDataset((image,action,nextImage,taskVector))
 
         result[taskName] = {

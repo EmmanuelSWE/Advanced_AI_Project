@@ -75,7 +75,7 @@ class Predictor:
         
             plt.figure(figsize=(8,8))
             plt.subplot(2,1,1)
-            plt.bar(acc,label= 'Test mean_squared_error,',height= 10)
+            plt.bar('Test mean_squared_error,',[acc])
         
             plt.legend(loc='lower right')
             plt.ylabel('mean_squared_error')
@@ -83,7 +83,7 @@ class Predictor:
         
         
             plt.subplot(2,1,2)
-            plt.bar(loss,label= 'Training Loss',height= 10)
+            plt.bar('Training Loss',[loss])
         
             plt.legend(loc='lower right')
             plt.ylabel('Loss')
