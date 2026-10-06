@@ -15,9 +15,9 @@ import utils.const_list_utils as listUtils
 import os
 
 class Predictor:
-    """Predictor network wrapper: holds the Keras model, training history and test results."""
+    # Predictor network wrapper: holds the Keras model, training history and test results.
     def __init__(self):
-        """Build the encoder-decoder: (image, action, task) in, next image out."""
+        # Build the encoder-decoder: (image, action, task) in, next image out.
         image = layers.Input((480,480,3), name= "image")
         action = layers.Input((4,), name= "action")
         task = layers.Input((3,), name = 'task')
@@ -61,7 +61,7 @@ class Predictor:
         self.results = None
 
     def train(self,dataset,val, epochs,batch):
-        """Train on `dataset`, validating on `val`, for `epochs` epochs with the given batch size; returns the Keras history."""
+        # Train on `dataset`, validating on `val`, for `epochs` epochs with the given batch size; returns the Keras history.
         dstrain = self.loadDataSet(dataset=dataset,batch=batch)
         dsVal = self.loadDataSet(val,batch=batch)
 
@@ -82,7 +82,7 @@ class Predictor:
 
 
     def plotTestResults(self):
-        """Plot the stored test MSE and loss as bar charts and save predictor_Tested.png."""
+        # Plot the stored test MSE and loss as bar charts and save predictor_Tested.png.
         print(self.results.keys())
         if(self.results):
             acc = self.results['mean_squared_error']
@@ -113,7 +113,7 @@ class Predictor:
             plt.savefig('predictor_Tested.png', dpi=150)
 
     def plotTraining(self):
-        """Plot training/validation MSE and loss per epoch and save predictor_Trained.png."""
+        # Plot training/validation MSE and loss per epoch and save predictor_Trained.png.
         print(self.history.history.keys())
         if(self.history):
             acc = self.history.history['mean_squared_error']
@@ -145,7 +145,7 @@ class Predictor:
 
 
     def evaluateOnTest(self,testSet, batch):
-        """Evaluate on testSet with the given batch size; stores the metrics dict in self.results."""
+        # Evaluate on testSet with the given batch size; stores the metrics dict in self.results.
         dsTest = self.loadDataSet(testSet, batch)
 
         results = self.model.evaluate(dsTest,return_dict=True)
@@ -227,5 +227,4 @@ class Predictor:
 
     
 def predict_images():
-    """Unused placeholder."""
     None 

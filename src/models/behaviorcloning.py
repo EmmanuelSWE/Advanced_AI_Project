@@ -20,10 +20,9 @@ logger = tf.get_logger()
 logger.setLevel(logging.ERROR)
 
 class CNN:
-    """Policy network wrapper: holds the Keras model, training history and test results."""
+    # Policy network wrapper: holds the Keras model, training history and test results.
     def __init__(self):
-
-        """Build the CNN: image + task in, 4-number action out."""
+        # Build the CNN: image + task in, 4-number action out.
         # two named inputs: a 480x480 RGB image and a one-hot task vector of length 3
         image = layers.Input((480,480,3) ,name="image")
         task = layers.Input((3,),name="task")
@@ -61,8 +60,7 @@ class CNN:
         self.results = None
 
     def behavior_cloning(self,trainSet,valSet):
-        
-        """Train the policy on trainSet and validate on valSet; stores the Keras history in self.history."""
+        # Train the policy on trainSet and validate on valSet; stores the Keras history in self.history.
         # batch size, learning rate and epochs are read here, at training time, so edits made in the menu apply
         batch = listUtils.HYPERPARAMS['policy_batch']
         dsTrain = self.loadDataSet(trainSet,batch)
@@ -108,8 +106,7 @@ class CNN:
                ).shuffle(30).batch(batch)
 
     def identifyActions(self,img,task):
-
-        """Print the policy's predicted action for one image and task (adds a batch dimension of 1)."""
+        # Print the policy's predicted action for one image and task (adds a batch dimension of 1).
         # expand_dims adds the batch dimension; the image is scaled from 0-255 to 0-1
         inputs = {
             "image": np.expand_dims(np.asanyarray(img, dtype=np.float32) / 255.0, axis = 0),
@@ -124,7 +121,7 @@ class CNN:
         print(f"prediction is {prediction}")
         
     def evaluateTraining(self,testSet):
-        """Evaluate the policy on testSet; stores the metrics dict in self.results."""
+        # Evaluate the policy on testSet; stores the metrics dict in self.results.
         dsTest = self.loadDataSet(testSet,self.BATCH_SIZE)
 
         
@@ -134,7 +131,7 @@ class CNN:
         
 
     def plotTestData(self):
-        """Plot the stored test MAE and loss as bar charts and save policy_Tested.png."""
+        # Plot the stored test MAE and loss as bar charts and save policy_Tested.png.
         print(self.results.keys())
         if(self.results):
             acc = self.results['MAE']
@@ -162,7 +159,7 @@ class CNN:
             
             # save the image
             plt.tight_layout()
-            # delete the previous plot file, then save the new one (os.remove raises if the file does not exist)
+            # delete the previous plot file, then save the new one
             os.remove("policy_Tested.png")
             plt.savefig('policy_Tested.png', dpi=150)
             
@@ -173,7 +170,7 @@ class CNN:
 
     
     def plotTrainingData(self):
-        """Plot training/validation MAE and loss per epoch and save policy_Trained.png."""
+        # Plot training/validation MAE and loss per epoch and save policy_Trained.png.
         print(self.history.history.keys())
         if(self.history):
             acc = self.history.history['MAE']
@@ -201,6 +198,6 @@ class CNN:
 
             # save the image
             plt.tight_layout()
-            # delete the previous plot file, then save the new one (os.remove raises if the file does not exist)
+            # delete the previous plot file, then save the new one
             os.remove("policy_Trained.png")
             plt.savefig('policy_Trained.png', dpi=150)

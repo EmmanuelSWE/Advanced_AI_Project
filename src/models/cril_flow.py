@@ -69,7 +69,7 @@ def make_trajectory(gen,policy,predictor,taskVector,step =30,noise=None):
 
 
 def pixels(image):
-    """Convert a float image in [0, 1] to uint8 [0, 255] so it can be saved as PNG."""
+    # Convert a float image in [0, 1] to uint8 [0, 255] so it can be saved as PNG.
     return (np.clip(image,0,1) * 255).astype(np.uint8)
 
 def combinedDataset(name,realDataset):
@@ -107,7 +107,7 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
 
         
             # Temporary replay frames for this training stage.
-        # hardcoded Kaggle path: replay frames are written to disk (only paths are kept in memory) and deleted after the stage
+        # replay frames are written to /kaggle/working/cril_replay/task_N (only paths are kept in memory) and deleted after the stage
         replayDir = Path(
             f"/kaggle/working/cril_replay/task_{taskNum + 1}"
         )
@@ -165,7 +165,7 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
         # WGAN-GP on this stage's first frames (default 30 epochs)
         WGAN.train_wagangp(gen,disc,ganBatches,epochs=listUtils.HYPERPARAMS['cril_gan_epochs'])
 
-        # checkpoints of this stage go under a hardcoded Kaggle path
+        # checkpoints of this stage are saved to /kaggle/working/cril_results/task_N
         stageDir = Path(f"/kaggle/working/cril_results/task_{taskNum + 1}") 
         stageDir.mkdir(parents=True,exist_ok=True)
 

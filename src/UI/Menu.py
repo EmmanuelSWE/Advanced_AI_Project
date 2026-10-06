@@ -1,4 +1,4 @@
-"""Console menu: owns the models and datasets and runs the menu item the user picks (UI/MenuItems.py)."""
+# Console menu: owns the models and datasets and runs the menu item the user picks (UI/MenuItems.py).
 
 import utils.meta_wrld_utils as metaUtils
 import utils.csv_utils as csvUtils
@@ -13,7 +13,7 @@ import UI.MenuItems as Items
 import tensorflow as tf 
 
 class Menu: 
-    """Menu that holds the shared models and the datasets and runs the chosen MenuItem."""
+    # Menu that holds the shared models and the datasets and runs the chosen MenuItem.
     def __init__(self,fullDs,loadModels,save,trainModels):
         """Create the models and menu items.
 
@@ -46,11 +46,10 @@ class Menu:
         self.menuItems = [Items.policyTrain(save),
                           Items.policyTest(save),
                           Items.ganTrain(save),
-                          Items.ganTest(save),
                           Items.predTrain(save),
                           Items.predTest(save),
                           Items.crilTrain(save,fullDs),
-                          # last, so the numbers 1-7 of the other items stay the same
+                          # the hyperparameter item is added last
                           Items.hyperparamConfig(save)]
 
     
@@ -62,11 +61,11 @@ class Menu:
 
 
     def showOpener(self):
-         """Print the welcome line."""
+         # Print the welcome line.
          print(f"HELL USER WELCOME TO THE MENU"
 )
     def showMenuItems(self):
-        """Print the number, name and description of every menu item."""
+        # Print the number, name and description of every menu item.
         for i, item in  enumerate(self.menuItems):
             print(f"[{i +1}]  --- : {item.name}")
             print(f"[Description] ---: {item.description}")
@@ -110,7 +109,7 @@ class Menu:
         while(blContinue):
             self.showOpener()
             self.showMenuItems()
-            # int() raises ValueError if the user types something that is not a number
+            # convert the typed text to a number
             userCommand = int(input("Please input a Menu Choice"))
             if(userCommand == 0):
                 blContinue = False 

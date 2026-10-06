@@ -25,14 +25,13 @@ logger.setLevel(logging.ERROR)
 
 
 
-# defined but not used: the WGAN-GP losses below do not use cross-entropy
+# binary cross-entropy loss object; the WGAN-GP losses below use the critic scores directly
 crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 class Generator:
-    """Generator network: (4-number noise, task one-hot) -> 480x480 RGB image in [-1, 1]."""
+    # Generator network: (4-number noise, task one-hot) -> 480x480 RGB image in [-1, 1].
     def __init__(self):
-
-       """Build the generator model and its Adam optimizer."""
+       # Build the generator model and its Adam optimizer.
        # Adam with learning rate 1e-4; each network has its own optimizer
        self.optimizer = tf.keras.optimizers.Adam(1e-4)
        # two inputs: a 4-number noise vector (named 'action') and the 3-number task one-hot
@@ -67,7 +66,7 @@ class Generator:
        print(f'gen shape is {self.model.summary()}')
 
     def getLoss(self,output):
-        """Generator loss: minus the mean critic score of the fake images (the generator wants a high score)."""
+        # Generator loss: minus the mean critic score of the fake images (the generator wants a high score).
         return -tf.reduce_mean(output)
     
 
@@ -75,9 +74,9 @@ class Generator:
 
 
 class Discrimintator: 
-    """Critic (the WGAN discriminator): gives an image + task one real-valued score instead of a probability."""
+    # Critic (the WGAN discriminator): gives an image + task one real-valued score instead of a probability.
     def __init__(self):
-        """Build the critic model and its Adam optimizer."""
+        # Build the critic model and its Adam optimizer.
         self.optimizer = tf.keras.optimizers.Adam(1e-4)
         # two inputs: a 480x480 RGB image and the 3-number task one-hot
         image = layers.Input((480,480,3), name = "image")
@@ -99,7 +98,7 @@ class Discrimintator:
         print(f'disc shape is {self.model.summary()}')
 
     def getLoss(self,real,fake,penalty):
-        """Critic loss: mean(fake) - mean(real) + gp_lambda * gradient penalty (default 10, the usual WGAN-GP weight)."""
+        # Critic loss: mean(fake) - mean(real) + gp_lambda * gradient penalty (default 10, the usual WGAN-GP weight).
         return (
              tf.reduce_mean(fake) - tf.reduce_mean(real) + listUtils.HYPERPARAMS['gp_lambda'] * penalty
         )
@@ -229,7 +228,7 @@ def train_wagangp(gen,disc,dataset,epochs):
         
 
 def plotHistory(history,epochs):
-     """Plot the generator and critic loss curves and save them to GAN_Trained_Losses.png."""
+     # Plot the generator and critic loss curves and save them to GAN_Trained_Losses.png.
      fig, axes = plt.subplots(1,2,figsize = (11,4))
      # the `epochs` argument is replaced here by a range matching the history length
      epochs = range(1,len(history['gen_loss']) + 1)

@@ -17,27 +17,27 @@ import models.cril_flow as cril
 import utils.const_list_utils as listUtils
 
 class MenuItem: 
-    """Base class for all menu entries; holds a name, a description and the save flag."""
+    # Base class for all menu entries; holds a name, a description and the save flag.
     def __init__(self,name,description,save):
-        """Store the title and description shown in the menu and whether to save models afterwards."""
+        # Store the title and description shown in the menu and whether to save models afterwards.
         self.name = name 
         self.description = description 
         self.save = save
 
     def exec(self,models,dataset):
-        """Default action; every subclass overrides this."""
+        # Default action; every subclass overrides this.
         print (f"executing menu item{self.name} ") 
 
 
 # POLOCY MENU ITTEMS
 class policyTrain(MenuItem):
-    """Menu item: trains the policy (behavior cloning) and plots its curves."""
+    # Menu item: trains the policy (behavior cloning) and plots its curves.
     def __init__(self,save):
         # super().__init__ runs MenuItem.__init__ to set name, description and save
         super().__init__('Train Policy', 'Menu item is used to test the policy',save)
 
     def exec(self,models,dataset):
-        """Fit the policy on the train and validation splits, plot the curves, optionally save policy_model.keras."""
+        # Fit the policy on the train and validation splits, plot the curves, optionally save policy_model.keras.
         #get the policyDataset 
         print('Attempting to make the behavior cloning')
         policy = models["policy"]
@@ -57,12 +57,12 @@ class policyTrain(MenuItem):
         
 
 class policyTest(MenuItem):
-    """Menu item: evaluates the policy on the test split and plots the result."""
+    # Menu item: evaluates the policy on the test split and plots the result.
     def __init__(self,save):
         super().__init__('Test Policy', 'Menu item is used to train the policy',save)
 
     def exec(self,models,dataset):
-        """Evaluate the policy on the test split and save the result plot."""
+        # Evaluate the policy on the test split and save the result plot.
         #get the policyDataset 
         print('Attempting to test')
         policy = models["policy"]
@@ -79,12 +79,12 @@ class policyTest(MenuItem):
 
 # GAN MENU ITEMS
 class ganTrain(MenuItem):
-    """Menu item: trains the WGAN-GP image generator."""
+    # Menu item: trains the WGAN-GP image generator.
     def __init__(self,save):
         super().__init__('train GAN', 'Menu item is used to train the GAN',save)
 
     def exec(self,models,dataset):
-        """Train the GAN (epochs and batch size from HYPERPARAMS) on the GAN train split, plot the losses, optionally save generator and critic."""
+        # Train the GAN (epochs and batch size from HYPERPARAMS) on the GAN train split, plot the losses, optionally save generator and critic.
         print("Training the gan")
         #get the policyDataset 
        ## okay now the gan 
@@ -106,7 +106,6 @@ class ganTrain(MenuItem):
         print("datasetLoaded")
         # train_wagangp returns the loss history (default 5 epochs); plotHistory draws and saves it
         WGAN.plotHistory(WGAN.train_wagangp(gen,disc,genTrainSet,listUtils.HYPERPARAMS['gan_epochs']),listUtils.HYPERPARAMS['gan_epochs'])
-        # a bare string expression: it has no effect and prints nothing
         ("Training done ")
 
         if(self.save):
@@ -114,45 +113,17 @@ class ganTrain(MenuItem):
             disc.model.save('critic_model.keras')
        
 
-class ganTest(MenuItem):
-    """Menu item: runs the GAN with a different batch size and plots the losses."""
-    def __init__(self,save):
-       
-        super().__init__('test GAN', 'test GAN',save)
-
-    def exec(self,models,dataset):
-        """Despite the name, this calls the same training routine as ganTrain (default batch size 4, 5 epochs) and plots the losses.
-        It does not compute a separate test metric and does not save anything.
-        """
-        print("Testing the gan")
-        #get the policyDataset 
-        ## okay now the gan 
-        gen = models["GAN"][0]
-        disc = models["GAN"][1]
-        genTrainSet = dataset["GAN"][0]
-        genValSet = dataset["GAN"][1]
-        genTestSet = dataset["GAN"][2]
-        #gen = WGAN.Generator()
-        #disc = WGAN.Discrimintator()
-        
-        # load the dataset and train 
-        
-        genTrainSet = WGAN.loadDataSet(genTrainSet,listUtils.HYPERPARAMS['gan_test_batch'])
-        
-        WGAN.plotHistory(WGAN.train_wagangp(gen,disc,genTrainSet,listUtils.HYPERPARAMS['gan_epochs']),listUtils.HYPERPARAMS['gan_epochs'])
-
 
 
 # PREDICTOR MENU ITEMS 
 
 class predTrain(MenuItem):
-    """Menu item: trains the next-frame predictor."""
+    # Menu item: trains the next-frame predictor.
     def __init__(self,save):
         super().__init__('train Predictor', 'Menu item is used to train the predictor',save)
 
     def exec(self,models,dataset):
-       
-        """Train the predictor, plot the curves, save an example prediction picture, optionally save predictor_model.keras."""
+        # Train the predictor, plot the curves, save an example prediction picture, optionally save predictor_model.keras.
         # predictor 
         pred = models["pred"]
         predTrainSet = dataset["pred"][0]
@@ -173,12 +144,12 @@ class predTrain(MenuItem):
 
 
 class predTest(MenuItem):
-    """Menu item: evaluates the predictor on the test split."""
+    # Menu item: evaluates the predictor on the test split.
     def __init__(self,save):
         super().__init__('test Predictor', 'Menu item is used to test the Predictor',save)
 
     def exec(self,models,dataset):
-        """Show one prediction, evaluate on the test split (batch size pred_batch, default 30) and plot the result."""
+        # Show one prediction, evaluate on the test split (batch size pred_batch, default 30) and plot the result.
         # predictor 
         pred = models["pred"]
         predTrainSet = dataset["pred"][0]
@@ -195,7 +166,7 @@ class predTest(MenuItem):
 
 
 class crilTrain(MenuItem):
-    """Menu item: runs the whole CRIL loop, learning the tasks one after another with generated replay."""
+    # Menu item: runs the whole CRIL loop, learning the tasks one after another with generated replay.
     def __init__(self,save,fullDs):
         super().__init__("Train CRIL", "learn Tasks sequentially with genrated replay", save)
 
@@ -242,7 +213,7 @@ class crilTrain(MenuItem):
 
 # HYPERPARAMETER MENU ITEM
 class hyperparamConfig(MenuItem):
-    """Menu item: shows the hyperparameters in listUtils.HYPERPARAMS and lets the user change them."""
+    # Menu item: shows the hyperparameters in listUtils.HYPERPARAMS and lets the user change them.
     def __init__(self,save):
         super().__init__('Hyperparameters', 'Menu item is used to view and change the training hyperparameters',save)
 
@@ -257,7 +228,7 @@ class hyperparamConfig(MenuItem):
         while(blContinue):
             for i, key in enumerate(keys):
                 print(f"[{i +1}]  --- : {key} = {listUtils.HYPERPARAMS[key]}")
-            # int() raises ValueError if the user types something that is not a number
+            # convert the typed text to a number; ask again if it is not a number
             try:
                 choice = int(input("Pick a hyperparameter number (0 to go back)"))
             except ValueError:

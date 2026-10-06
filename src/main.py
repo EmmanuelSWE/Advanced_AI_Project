@@ -1,8 +1,7 @@
 """Entry point of the CRIL replication.
 
-Run from the src/ folder:  python main.py <fullDs> [-l] [-s] [-t]
 It parses the command line flags, builds the console Menu (UI/Menu.py) and starts it.
-Most imports below are not used in this file; they only load the project modules.
+The imports below load the project modules.
 """
 import utils.meta_wrld_utils as metaUtils
 import utils.csv_utils as csvUtils

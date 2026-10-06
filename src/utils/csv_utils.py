@@ -11,7 +11,7 @@ from pathlib import Path
 import itertools
 
 
-# number of header rows; not used below (readFile skips the header with next())
+# number of header rows (readFile skips the header with next())
 headingCount =1 
 
 
@@ -19,7 +19,7 @@ def readFile(end, demonID):
     
     """Return the CSV rows whose demonstration number is between demonID and end (inclusive).
 
-    Args: end (last demo number), demonID (first demo number); note that end comes first.
+    Args: end (last demo number), demonID (first demo number).
     Returns: list of rows, each a list of strings.
     """
     content= []
@@ -59,7 +59,7 @@ def writeToFile(name, content,mode = 'old'):
 
 
 def createDataset():
-    """Reset the dataset folder (delete and recreate it) and write only the header row."""
+    # Reset the dataset folder (delete and recreate it) and write only the header row.
     # remove() deletes the whole folder, including any old CSV, so it starts clean
     remove(dsPath)
     Path(dsPath).mkdir(exist_ok=True, parents= True) # create the path 
@@ -71,7 +71,7 @@ def createDataset():
 
 
 def writeToDataset(contents): # contents has to be a 2d array
-    """Append every row of `contents` (a list of rows) to the dataset CSV."""
+    # Append every row of `contents` (a list of rows) to the dataset CSV.
     print(f'appeding to file {dsPath}/{filePath}')
 
     for i,line in enumerate(contents):

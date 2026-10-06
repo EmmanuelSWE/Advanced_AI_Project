@@ -35,7 +35,7 @@ def createEnv(name, seed):
 #HEADING_CONST= ['imgID','task','step','path','action','seed']
 #function to store images infolder
 def runAndStoreDemonstrations():
-    """Collect 100 successful expert demonstrations for every task and store frames + CSV rows."""
+    # Collect 100 successful expert demonstrations for every task and store frames + CSV rows.
     #create the storage
     imageUtil.createImagePaths(tasks)
     csvUtils.createDataset() 
@@ -65,7 +65,7 @@ def runAndStoreDemonstrations():
 
 
 def getPolicy(name): # small function to get the policy
-    """Return the scripted expert policy for the task name (None if the name is unknown)."""
+    # Return the scripted expert policy for the task name (None if the name is unknown).
     print(f"NAME OF POLICY ILL GET FOR {name}")
     if name == tasks[0]:
         return SawyerReachV3Policy()

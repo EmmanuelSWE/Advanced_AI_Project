@@ -1,30 +1,27 @@
-"""Dataset: a tiny container class holding a named list of samples.
-
-The imports below (numpy, time) are not used in this file.
-"""
+# Dataset: a tiny container class holding a named list of samples.
 import numpy as np
 import time 
 
 
 class Dataset:
-    """A named list of samples; the sample layout depends on who fills it (GAN, policy or predictor)."""
+    # A named list of samples; the sample layout depends on who fills it (GAN, policy or predictor).
     def __init__(self,name):
-        """Create an empty dataset called `name`."""
+        # Create an empty dataset called `name`.
         self.name = name 
         self.rootPath = None
         self.contents = []
 
     def addToDataset(self,img): 
-        """Append one sample (a tuple) to the list."""
+        # Append one sample (a tuple) to the list.
         self.contents.append(img)
 
     def clearDataset(self):
-        """Empty the list and print a message."""
+        # Empty the list and print a message.
         self.contents = []
         print(f"dataset of name {self.name} has been cleared")
 
     def getItem(self,index):
-        """Return the sample at `index`."""
+        # Return the sample at `index`.
         return self.contents[index]
 
     def loadcontents(self,imgs,path):

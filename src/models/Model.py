@@ -1,7 +1,4 @@
-"""Model: an unused stub base class (nothing in the project imports it).
-
-The imports are leftovers and the methods only contain `None`.
-"""
+# Model: a base class sketch with empty history and results slots and the method names a model has.
 import tensorflow as tf 
 import math 
 import numpy as np 
@@ -20,13 +17,13 @@ from tensorflow.keras import layers
 import time
 
 class Model: 
-    """Placeholder base class for the models; the real models live in the other files of models/."""
+    # Base class for the models; the real models live in the other files of models/.
     def __init__(self,localRun):
-        """Create empty history/results slots; `localRun` is accepted but not stored."""
+        # Create empty history and results slots.
         self.history = None
         self.Results = None
 
-    # placeholder methods: each body is just None, so nothing is implemented here
+    # method names a model has (the bodies are just None)
     def loadDataSet(): 
         None 
 

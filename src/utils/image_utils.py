@@ -1,4 +1,4 @@
-"""Image helpers: create the folders for generated images, save and load PNGs, convert to NumPy arrays."""
+# Image helpers: create the folders for generated images, save and load PNGs, convert to NumPy arrays.
 from PIL import Image
 import imageio.v3 as iio 
 import time
@@ -8,7 +8,7 @@ from utils.const_list_utils import remove
 import numpy as np
 
 def createImagePaths(arrNames):
-    """Delete the generated-images folder and create one sub-folder per task name in arrNames."""
+    # Delete the generated-images folder and create one sub-folder per task name in arrNames.
     remove(genPath) # first remove
     for _, name in enumerate(arrNames):
       
@@ -29,18 +29,18 @@ def saveImageToPath(path,image,step,index):
 
 
 def loadImageFromPath(path):
-    """Open an image file with PIL and return the PIL image."""
+    # Open an image file with PIL and return the PIL image.
     return Image.open(path, 'r', None)
 
 
 def getSize(image): 
-    """Return the (width, height) of a PIL image."""
+    # Return the (width, height) of a PIL image.
     return image.size
 
 
 
 def imageArray(value):
-    """Return a uint8 RGB array from a file path (str or Path) or from an array / PIL image."""
+    # Return a uint8 RGB array from a file path (str or Path) or from an array / PIL image.
     if isinstance(value, (str, Path)):
         # `with` closes the file after reading; convert('RGB') makes sure there are 3 channels; copy=True makes an independent array
         with Image.open(value) as image:

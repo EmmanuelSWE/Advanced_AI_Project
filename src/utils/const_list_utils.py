@@ -1,4 +1,4 @@
-"""Shared constants and small helpers: task names, folder and CSV names, the one-hot task vector, folder removal."""
+# Shared constants and small helpers: task names, folder and CSV names, the one-hot task vector, folder removal.
 import tensorflow as tf
 from pathlib import Path
 import numpy as np
@@ -15,20 +15,20 @@ HEADING_CONST= ['imgID','demonstarionID','task','step','path','action']
 # tunable hyperparameters; the defaults are the values the code used before this dict existed.
 # The menu item hyperparamConfig (UI/MenuItems.py) edits this dict, and the training code reads it
 # when training starts, so a change applies to the next run. The type of each default (int or float)
-# decides how typed input is converted. The GAN learning rate (1e-4) is not here: its optimizers are
-# built once when the Menu is created, so changing it later would need a new mechanism.
+# decides how typed input is converted. The GAN learning rate (1e-4) is not in this dict: it is set
+# once in the Generator and Discrimintator classes (models/wgangp.py).
 HYPERPARAMS = {
     'policy_lr': 1e-3,        # policy Adam learning rate (Keras 'adam' default)
     'policy_epochs': 5,
     'policy_batch': 1,
     'pred_lr': 1e-4,          # predictor Adam learning rate
-    'pred_epochs': 5,         # menu item 5
-    'pred_batch': 30,         # menu items 5 and 6
-    'gan_epochs': 5,          # menu items 3 and 4
-    'gan_batch': 1,           # menu item 3
-    'gan_test_batch': 4,      # menu item 4
+    'pred_epochs': 5,         # train Predictor
+    'pred_batch': 30,         # train Predictor and test Predictor
+    'gan_epochs': 5,          # train GAN
+    'gan_batch': 1,           # train GAN
+    'gan_test_batch': 4,
     'gp_lambda': 10.0,        # gradient penalty weight in the critic loss
-    'cril_pred_epochs': 5,    # CRIL (menu item 7)
+    'cril_pred_epochs': 5,    # Train CRIL
     'cril_pred_batch': 1,
     'cril_gan_epochs': 30,
     'cril_gan_batch': 1,
@@ -36,9 +36,9 @@ HYPERPARAMS = {
 }
 
 
-# file manipulation util didnt know where to put it
+# file manipulation helper
 def remove(pathstr):
-    """Delete the folder at `pathstr` and everything in it, if it exists; otherwise do nothing."""
+    # Delete the folder at `pathstr` and everything in it, if it exists; otherwise do nothing.
     delPath =Path(pathstr)
     if delPath.exists() and  delPath.is_dir():
         shutil.rmtree(delPath)

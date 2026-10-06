@@ -1,0 +1,9 @@
+# Python 3.12. metaworld and gymnasium are needed even for training, because main.py imports the data collection module (utils/meta_wrld_utils.py).
+tensorflow==2.21.0
+numpy==2.5.3
+pillow==12.3.0
+matplotlib==3.11.2
+imageio==2.38.0
+gymnasium==1.4.0
+mujoco==3.3.0
+metaworld @ git+https://github.com/Farama-Foundation/Metaworld.git@main
