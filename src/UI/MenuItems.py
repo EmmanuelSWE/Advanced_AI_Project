@@ -190,3 +190,9 @@ class crilTrain(MenuItem):
             testByTask=testByTask
 
         )
+
+        if(self.save):
+            models['policy'].model.save('kaggle_policy_model.keras')
+            models['GAN'][0].model.save('kaggle_generator_model.keras')
+            models['GAN'][1].model.save('kaggle_critic_model.keras')
+            models['pred'].model.save('kaggle_predcitor_model.keras')
