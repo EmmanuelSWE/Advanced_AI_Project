@@ -15,6 +15,7 @@ from PIL import Image
 from tensorflow.keras import layers
 import time
 from utils.const_list_utils import remove
+import utils.const_list_utils as listUtils
 
 # show only ERROR messages from TensorFlow's logger (hides warnings and info)
 #making the logs
@@ -98,9 +99,9 @@ class Discrimintator:
         print(f'disc shape is {self.model.summary()}')
 
     def getLoss(self,real,fake,penalty):
-        """Critic loss: mean(fake) - mean(real) + 10 * gradient penalty (10 is the usual WGAN-GP weight)."""
+        """Critic loss: mean(fake) - mean(real) + gp_lambda * gradient penalty (default 10, the usual WGAN-GP weight)."""
         return (
-             tf.reduce_mean(fake) - tf.reduce_mean(real) + 10.0 * penalty
+             tf.reduce_mean(fake) - tf.reduce_mean(real) + listUtils.HYPERPARAMS['gp_lambda'] * penalty
         )
 
 

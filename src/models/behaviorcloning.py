@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import os
 from tensorflow.keras import layers
 import utils.image_utils as imgUtils
+import utils.const_list_utils as listUtils
 
 #making the logs
 import logging
@@ -62,12 +63,15 @@ class CNN:
     def behavior_cloning(self,trainSet,valSet):
         
         """Train the policy on trainSet and validate on valSet; stores the Keras history in self.history."""
-        dsTrain = self.loadDataSet(trainSet,self.BATCH_SIZE)
-        dsVal = self.loadDataSet(valSet,self.BATCH_SIZE)
-        # mean squared error loss on the action vector, mean absolute error (MAE) reported as a metric
-        self.model.compile(optimizer='adam',loss= tf.keras.losses.MeanSquaredError(), metrics=['MAE'])
-        # 5 epochs; the validation set is evaluated after every epoch
-        history = self.model.fit(dsTrain, epochs=5, validation_data=dsVal)
+        # batch size, learning rate and epochs are read here, at training time, so edits made in the menu apply
+        batch = listUtils.HYPERPARAMS['policy_batch']
+        dsTrain = self.loadDataSet(trainSet,batch)
+        dsVal = self.loadDataSet(valSet,batch)
+        # mean squared error loss on the action vector, mean absolute error (MAE) reported as a metric;
+        # Adam(lr) with the default 1e-3 is the same optimizer as the string 'adam'
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(listUtils.HYPERPARAMS['policy_lr']),loss= tf.keras.losses.MeanSquaredError(), metrics=['MAE'])
+        # the validation set is evaluated after every epoch
+        history = self.model.fit(dsTrain, epochs=listUtils.HYPERPARAMS['policy_epochs'], validation_data=dsVal)
         
         self.history = history
 

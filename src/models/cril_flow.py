@@ -158,12 +158,12 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
         print(f"training Task {taskNum + 1} : {taskName}")
         # train on real + replayed data; validation uses only the current task's real validation data
         policy.behavior_cloning(policyData,real["policyVal"])
-        # predictor: 5 epochs, batch size 1
-        pred.train(predData, real["predVal"],epochs = 5, batch = 1)
-        # GAN data in a streaming pipeline, batch size 1
-        ganBatches = WGAN.loadDataSet(ganData,batch=1)
-        # WGAN-GP for 30 epochs on this stage's first frames
-        WGAN.train_wagangp(gen,disc,ganBatches,epochs=30)
+        # predictor: epochs and batch size come from HYPERPARAMS (defaults 5 and 1)
+        pred.train(predData, real["predVal"],epochs = listUtils.HYPERPARAMS['cril_pred_epochs'], batch = listUtils.HYPERPARAMS['cril_pred_batch'])
+        # GAN data in a streaming pipeline (default batch size 1)
+        ganBatches = WGAN.loadDataSet(ganData,batch=listUtils.HYPERPARAMS['cril_gan_batch'])
+        # WGAN-GP on this stage's first frames (default 30 epochs)
+        WGAN.train_wagangp(gen,disc,ganBatches,epochs=listUtils.HYPERPARAMS['cril_gan_epochs'])
 
         # checkpoints of this stage go under a hardcoded Kaggle path
         stageDir = Path(f"/kaggle/working/cril_results/task_{taskNum + 1}") 
@@ -178,7 +178,7 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
         allResults[taskName] = testLearnedTasks(taskOrder=taskOrder, learnedCount=taskNum + 1 , testByTask=testByTask,policy=policy,pred=pred)
 
 
-        # save a 30-step imagined trajectory per learned task (fixed noise) to inspect the generated frames
+        # save an imagined trajectory per learned task (fixed noise, default 30 steps) to inspect the generated frames
         for learnedTask in taskOrder[:taskNum +1 ]:
             frameDir = stageDir/learnedTask
             frameDir.mkdir(exist_ok=True)
@@ -186,7 +186,7 @@ def train_tasks(taskOrder, realByTask, policy, gen,disc, pred, testByTask):
             transitions = make_trajectory(
                 gen, policy, pred,
                 taskVector=realByTask[learnedTask]["taskVector"],
-                step=30,
+                step=listUtils.HYPERPARAMS['cril_sample_steps'],
                 noise=fixedNoise,
             )
 

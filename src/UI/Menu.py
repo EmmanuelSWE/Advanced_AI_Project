@@ -49,7 +49,9 @@ class Menu:
                           Items.ganTest(save),
                           Items.predTrain(save),
                           Items.predTest(save),
-                          Items.crilTrain(save,fullDs)]
+                          Items.crilTrain(save,fullDs),
+                          # last, so the numbers 1-7 of the other items stay the same
+                          Items.hyperparamConfig(save)]
 
     
         

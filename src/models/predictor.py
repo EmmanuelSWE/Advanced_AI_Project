@@ -10,6 +10,7 @@ from datasets.dataset import Dataset
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers
 import utils.image_utils as imgUtils 
+import utils.const_list_utils as listUtils
 
 import os
 
@@ -64,9 +65,9 @@ class Predictor:
         dstrain = self.loadDataSet(dataset=dataset,batch=batch)
         dsVal = self.loadDataSet(val,batch=batch)
 
-        # Adam optimizer (learning rate 1e-4); MSE between predicted and real next frame
+        # Adam optimizer; the learning rate is read here, at training time, so a menu edit applies. MSE between predicted and real next frame
         self.model.compile(
-            optimizer= tf.keras.optimizers.Adam(1e-4),
+            optimizer= tf.keras.optimizers.Adam(listUtils.HYPERPARAMS['pred_lr']),
             loss={"nextImage": tf.keras.losses.MeanSquaredError()},
             metrics= {"nextImage" :[tf.keras.metrics.MeanSquaredError()]}
         )

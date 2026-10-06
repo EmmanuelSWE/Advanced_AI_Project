@@ -84,7 +84,7 @@ class ganTrain(MenuItem):
         super().__init__('train GAN', 'Menu item is used to train the GAN',save)
 
     def exec(self,models,dataset):
-        """Train the GAN for 5 epochs on the GAN train split, plot the losses, optionally save generator and critic."""
+        """Train the GAN (epochs and batch size from HYPERPARAMS) on the GAN train split, plot the losses, optionally save generator and critic."""
         print("Training the gan")
         #get the policyDataset 
        ## okay now the gan 
@@ -101,11 +101,11 @@ class ganTrain(MenuItem):
 
 
 
-        # wrap the dataset in a streaming tf.data pipeline with batch size 1 (keeps memory low)
-        genTrainSet = WGAN.loadDataSet(genTrainSet,1)
+        # wrap the dataset in a streaming tf.data pipeline (default batch size 1 keeps memory low)
+        genTrainSet = WGAN.loadDataSet(genTrainSet,listUtils.HYPERPARAMS['gan_batch'])
         print("datasetLoaded")
-        # train_wagangp returns the loss history (5 epochs); plotHistory draws and saves it
-        WGAN.plotHistory(WGAN.train_wagangp(gen,disc,genTrainSet,5),5)
+        # train_wagangp returns the loss history (default 5 epochs); plotHistory draws and saves it
+        WGAN.plotHistory(WGAN.train_wagangp(gen,disc,genTrainSet,listUtils.HYPERPARAMS['gan_epochs']),listUtils.HYPERPARAMS['gan_epochs'])
         # a bare string expression: it has no effect and prints nothing
         ("Training done ")
 
@@ -121,7 +121,7 @@ class ganTest(MenuItem):
         super().__init__('test GAN', 'test GAN',save)
 
     def exec(self,models,dataset):
-        """Despite the name, this calls the same training routine as ganTrain (batch size 4, 5 epochs) and plots the losses.
+        """Despite the name, this calls the same training routine as ganTrain (default batch size 4, 5 epochs) and plots the losses.
         It does not compute a separate test metric and does not save anything.
         """
         print("Testing the gan")
@@ -137,9 +137,9 @@ class ganTest(MenuItem):
         
         # load the dataset and train 
         
-        genTrainSet = WGAN.loadDataSet(genTrainSet,4)
+        genTrainSet = WGAN.loadDataSet(genTrainSet,listUtils.HYPERPARAMS['gan_test_batch'])
         
-        WGAN.plotHistory(WGAN.train_wagangp(gen,disc,genTrainSet,5),5)
+        WGAN.plotHistory(WGAN.train_wagangp(gen,disc,genTrainSet,listUtils.HYPERPARAMS['gan_epochs']),listUtils.HYPERPARAMS['gan_epochs'])
 
 
 
@@ -159,8 +159,8 @@ class predTrain(MenuItem):
         predValSet = dataset["pred"][1]
         predTestSet = dataset["pred"][2]
 
-        # arguments: train set, validation set, epochs = 5, batch = 30
-        pred.train(predTrainSet,predValSet,5,30)
+        # arguments: train set, validation set, epochs (default 5), batch (default 30)
+        pred.train(predTrainSet,predValSet,listUtils.HYPERPARAMS['pred_epochs'],listUtils.HYPERPARAMS['pred_batch'])
 
         pred.plotTraining()
 
@@ -178,7 +178,7 @@ class predTest(MenuItem):
         super().__init__('test Predictor', 'Menu item is used to test the Predictor',save)
 
     def exec(self,models,dataset):
-        """Show one prediction, evaluate on the test split (batch 30) and plot the result."""
+        """Show one prediction, evaluate on the test split (batch size pred_batch, default 30) and plot the result."""
         # predictor 
         pred = models["pred"]
         predTrainSet = dataset["pred"][0]
@@ -189,7 +189,7 @@ class predTest(MenuItem):
         
         
         #test
-        pred.evaluateOnTest(predTestSet,30)
+        pred.evaluateOnTest(predTestSet,listUtils.HYPERPARAMS['pred_batch'])
         pred.plotTestResults()
 
 
@@ -237,3 +237,46 @@ class crilTrain(MenuItem):
             models['GAN'][0].model.save('kaggle_generator_model.keras')
             models['GAN'][1].model.save('kaggle_critic_model.keras')
             models['pred'].model.save('kaggle_predcitor_model.keras')
+
+
+
+# HYPERPARAMETER MENU ITEM
+class hyperparamConfig(MenuItem):
+    """Menu item: shows the hyperparameters in listUtils.HYPERPARAMS and lets the user change them."""
+    def __init__(self,save):
+        super().__init__('Hyperparameters', 'Menu item is used to view and change the training hyperparameters',save)
+
+    def exec(self,models,dataset):
+        """Loop: list the values, pick one by number, type a new value; 0 goes back to the main menu.
+
+        The training code reads HYPERPARAMS when it starts, so a change applies to the next training run.
+        """
+        # fixed list of the keys, so a number picked by the user maps to one key
+        keys = list(listUtils.HYPERPARAMS.keys())
+        blContinue = True
+        while(blContinue):
+            for i, key in enumerate(keys):
+                print(f"[{i +1}]  --- : {key} = {listUtils.HYPERPARAMS[key]}")
+            # int() raises ValueError if the user types something that is not a number
+            try:
+                choice = int(input("Pick a hyperparameter number (0 to go back)"))
+            except ValueError:
+                print("Please type a number")
+                continue
+            if(choice == 0):
+                blContinue = False
+            elif (1 <= choice <= len(keys)):
+                key = keys[choice -1]
+                # type(old value) is int or float; calling it on the typed text converts the text to that type
+                try:
+                    newValue = type(listUtils.HYPERPARAMS[key])(input(f"New value for {key}"))
+                except ValueError:
+                    print("Invalid value, the old value is kept")
+                    continue
+                # zero or negative epochs, batch sizes or rates make no sense
+                if(newValue <= 0):
+                    print("Value must be greater than 0, the old value is kept")
+                    continue
+                listUtils.HYPERPARAMS[key] = newValue
+            else:
+                print("Selected wrong item please try again")
